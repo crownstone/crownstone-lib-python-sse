@@ -158,7 +158,7 @@ class CrownstoneSSE(Thread):
                         await self.fire_events(data)
             except asyncio.exceptions.TimeoutError:
                 # pass on timeout error raised from none, only stop on event, and no data.
-                print("hallo")
+                await self.connect()
             except ClientPayloadError:
                 # Connection was lost, payload uncompleted. try to reconnect
                 await self.connect()

@@ -24,7 +24,7 @@ def notify_presence_changed(event: PresenceEvent):
 
 
 sse_client = CrownstoneSSE()
-sse_client.set_user_information('email', 'password')
+sse_client.set_user_information('ricardo.steijn97@gmail.com', 'MyAwesomePassword')
 sse_client.start()
 
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
