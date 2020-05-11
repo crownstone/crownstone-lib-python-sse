@@ -197,7 +197,7 @@ class CrownstoneSSE(Thread):
                     event = PresenceEvent(data)
                     self.event_bus.fire(presence_event, event)
 
-    async def signal_handler(self) -> None:
+    def signal_handler(self) -> None:
         """
         Signal handler for main event loop.
         Linux only;
@@ -206,7 +206,7 @@ class CrownstoneSSE(Thread):
         """
         self.loop.remove_signal_handler(signal.SIGTERM)
         self.loop.remove_signal_handler(signal.SIGINT)
-        await self.async_stop()
+        self.loop.create_task(self.async_stop())
 
     def add_event_listener(self, event_type, callback):
         self.event_bus.add_event_listener(event_type=event_type, event_listener=callback)
