@@ -7,7 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ConnectError(Enum):
-    CONNECTION_FAILED_AFTER_5_RETRIES = 'CONNECTION_FAILED_AFTER_5_RETRIES'
+    CONNECTION_FAILED_NO_INTERNET = 'CONNECTION_FAILED_NO_INTERNET'
 
 
 class CrownstoneSseException(Exception):

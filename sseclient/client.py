@@ -4,7 +4,6 @@ import signal
 import sys
 import json
 import hashlib
-from datetime import timedelta
 from threading import Thread
 from aiohttp import (
     ClientSession,
@@ -16,7 +15,6 @@ from sseclient.const import (
     EVENT_CLIENT_STOP,
     EVENT_BASE_URL,
     LOGIN_URL,
-    MAX_CONNECT_RETRY,
     RECONNECTION_TIME,
     EVENT_SYSTEM_TOKEN_EXPIRED,
     EVENT_SWITCH_STATE_UPDATE,
@@ -46,20 +44,18 @@ _LOGGER = logging.getLogger(__name__)
 class CrownstoneSSE(Thread):
     """Client that manages IO with cloud and event server"""
 
-    def __init__(self, access_token: str = None) -> None:
+    def __init__(self, email: str, password: str) -> None:
         """Init the SSE client"""
         self.loop = asyncio.new_event_loop()
         self.loop.set_exception_handler(sse_exception_handler)
-        self.websession: ClientSession = ClientSession(loop=self.loop)
+        self.websession: ClientSession = ClientSession(loop=self.loop, read_timeout=None)
         self.event_bus: EventBus = EventBus()
         self.state = "not_running"
-        self.retries = MAX_CONNECT_RETRY
-        self.reconnect_time: timedelta = RECONNECTION_TIME
         self.stop_event: Optional[asyncio.Event] = None
         # Instance information
-        self.access_token = access_token
-        self.email: Optional[str] = None
-        self.password: Optional[str] = None
+        self.access_token: Optional[str] = None
+        self.email = email
+        self.password = password
         # Initialize thread
         super().__init__(target=self.run)
 
@@ -92,9 +88,8 @@ class CrownstoneSSE(Thread):
 
         self.state = 'running'
 
-    def set_user_information(self, email: str, password: str):
-        self.email = email
-        self.password = password
+    def set_access_token(self, access_token: str):
+        self.access_token = access_token
 
     async def login(self) -> None:
         """Login to Crownstone using email and password"""
@@ -113,7 +108,7 @@ class CrownstoneSSE(Thread):
                 data = await result.json()
                 self.access_token = data['id']
         except ClientConnectionError:
-            _LOGGER.error("Could not connect to the crownstone cloud")
+            raise CrownstoneSseException(ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection")
 
         _LOGGER.warning("Login successful")
 
@@ -126,42 +121,41 @@ class CrownstoneSSE(Thread):
                 response.raise_for_status()
                 await self.stream(response)
         except ClientConnectionError:
-            if self.retries <= 0:
-                await self.async_stop()
-                raise CrownstoneSseException(ConnectError.CONNECTION_FAILED_AFTER_5_RETRIES)
-            else:
-                self.reconnect_time *= 2
-                _LOGGER.warning('Reconnection in {} seconds'.format(self.reconnect_time.total_seconds()))
-                await asyncio.sleep(self.reconnect_time.total_seconds())
-                await self.connect()
+            _LOGGER.warning('Internet connection lost. Reconnection in {} seconds'.format(RECONNECTION_TIME))
+            await asyncio.sleep(RECONNECTION_TIME)
+            await self.connect()
 
     async def stream(self, stream_response):
         """Start streaming"""
         # aiohttp StreamReader instance
         stream_reader = stream_response.content
 
-        while stream_response.status != 204:  # no data
-            try:
-                async for event in stream_reader:
-                    if self.stop_event.is_set():
-                        break
-                    event = event.decode('utf8')  # string
-                    event = event.rstrip('\n').rstrip('\r')  # remove returns
+        try:
+            while stream_response.status != 204:  # no data
+                # de-block the main event loop to allow stop task to run
+                await asyncio.sleep(0)
+                # break if stop event is set after stop received
+                if self.stop_event.is_set():
+                    break
 
-                    if event.startswith(':'):
-                        # ignore :ping
-                        continue
+                # read one line of data from the stream
+                line_in_bytes = await stream_reader.readline()
+                line = line_in_bytes.decode('utf8')  # string
+                line = line.rstrip('\n').rstrip('\r')  # remove returns
 
-                    if event.startswith('data:'):
-                        line = event.lstrip('data:')
-                        data = json.loads(line)  # type dict
-                        await self.fire_events(data)
-            except asyncio.exceptions.TimeoutError:
-                # pass on timeout error raised from none, only stop on event, and no data.
-                await self.connect()
-            except ClientPayloadError:
-                # Connection was lost, payload uncompleted. try to reconnect
-                await self.connect()
+                if line.startswith(':'):
+                    # ignore :ping
+                    continue
+
+                if line.startswith('data:'):
+                    line = line.lstrip('data:')
+                    data = json.loads(line)  # type dict
+                    await self.fire_events(data)
+
+        except ClientPayloadError:
+            # Connection was lost, payload uncompleted. try to reconnect
+            # .connect() will handle further reconnection
+            await self.connect()
 
     async def fire_events(self, data) -> None:
         """Fire event based on the data"""
@@ -221,6 +215,10 @@ class CrownstoneSSE(Thread):
         Stop the Crownstone SSE client from an other thread.
         Thread safe.
         """
+        # ignore if not running
+        if self.state == 'not_running':
+            return
+        self.loop.create_task(self.async_stop())
 
     async def async_stop(self) -> None:
         """Stop Crownstone SSE client from within the loop."""
@@ -231,13 +229,12 @@ class CrownstoneSSE(Thread):
             _LOGGER.warning("stop already called")
             return
 
-        # stop the client, finish remaining tasks
-        self.stop_event.set()
         self.state = "stopping"
         self.event_bus.fire(EVENT_CLIENT_STOP)  # callback
 
         # Close the ClientSession
         await self.websession.close()
 
+        self.stop_event.set()
         self.state = "not_running"
         _LOGGER.warning("Crownstone SSE client stopped.")

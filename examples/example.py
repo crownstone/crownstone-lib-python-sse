@@ -1,3 +1,9 @@
+"""
+Example receiving Crownstone SSE events and creating callbacks for the received data.
+
+Created by Ricardo Steijn.
+Last update on 11-5-2020
+"""
 from sseclient.client import CrownstoneSSE
 from sseclient.events import (
     SwitchStateUpdateEvent,
@@ -23,8 +29,7 @@ def notify_presence_changed(event: PresenceEvent):
     print("User {} has entered location {}".format(event.user_id, event.location_id))
 
 
-sse_client = CrownstoneSSE()
-sse_client.set_user_information('ricardo.steijn97@gmail.com', 'MyAwesomePassword')
+sse_client = CrownstoneSSE('email', 'password')
 sse_client.start()
 
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)

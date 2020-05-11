@@ -1,5 +1,4 @@
 """Constants for the Crownstone Cloud lib"""
-from datetime import timedelta
 
 # URLs
 EVENT_BASE_URL = "https://events.crownstone.rocks/sse?accessToken="
@@ -7,8 +6,7 @@ LOGIN_URL = "https://cloud.crownstone.rocks/api/users/login"
 
 # SSE client
 EVENT_CLIENT_STOP = "client_stop"
-RECONNECTION_TIME = timedelta(seconds=5)
-MAX_CONNECT_RETRY = 5
+RECONNECTION_TIME = 30
 
 # SSE System events
 EVENT_SYSTEM = "system"
