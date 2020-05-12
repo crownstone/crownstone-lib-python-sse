@@ -52,6 +52,7 @@ class CrownstoneSSE(Thread):
         self.event_bus: EventBus = EventBus()
         self.state = "not_running"
         self.stop_event: Optional[asyncio.Event] = None
+        self.stopped: bool = False
         # Instance information
         self.access_token: Optional[str] = None
         self.email = email
@@ -75,7 +76,7 @@ class CrownstoneSSE(Thread):
             else:
                 await self.login()
 
-        # create an event that can be set to stop the loop
+        # create events for stop trigger
         self.stop_event = asyncio.Event()
 
         # add handler to loop for sigterm and sigint (linux)
@@ -85,8 +86,6 @@ class CrownstoneSSE(Thread):
 
         # Connect to the event server & start streaming
         await self.connect()
-
-        self.state = 'running'
 
     def set_access_token(self, access_token: str):
         self.access_token = access_token
@@ -129,11 +128,11 @@ class CrownstoneSSE(Thread):
         """Start streaming"""
         # aiohttp StreamReader instance
         stream_reader = stream_response.content
+        # client is now running, and can be stopped
+        self.state = "running"
 
         try:
             while stream_response.status != 204:  # no data
-                # de-block the main event loop to allow stop task to run
-                await asyncio.sleep(0)
                 # break if stop event is set after stop received
                 if self.stop_event.is_set():
                     break
@@ -151,6 +150,9 @@ class CrownstoneSSE(Thread):
                     line = line.lstrip('data:')
                     data = json.loads(line)  # type dict
                     await self.fire_events(data)
+
+                # de-block the main event loop to allow stop task to run
+                await asyncio.sleep(1)
 
         except ClientPayloadError:
             # Connection was lost, payload uncompleted. try to reconnect
@@ -213,7 +215,6 @@ class CrownstoneSSE(Thread):
     def stop(self) -> None:
         """
         Stop the Crownstone SSE client from an other thread.
-        Thread safe.
         """
         # ignore if not running
         if self.state == 'not_running':
@@ -229,12 +230,12 @@ class CrownstoneSSE(Thread):
             _LOGGER.warning("stop already called")
             return
 
+        self.stop_event.set()
         self.state = "stopping"
-        self.event_bus.fire(EVENT_CLIENT_STOP)  # callback
+        self.event_bus.fire(EVENT_CLIENT_STOP)  # for callback
 
         # Close the ClientSession
         await self.websession.close()
 
-        self.stop_event.set()
         self.state = "not_running"
         _LOGGER.warning("Crownstone SSE client stopped.")
