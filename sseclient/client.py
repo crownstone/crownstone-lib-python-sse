@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import signal
-import sys
 import json
 import hashlib
 from threading import Thread
@@ -62,8 +60,11 @@ class CrownstoneSSE(Thread):
 
     def run(self):
         """Start the SSE client"""
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.async_start())
+        try:
+            asyncio.set_event_loop(self.loop)
+            self.loop.run_until_complete(self.async_start())
+        finally:
+            self.loop.close()
 
     async def async_start(self) -> None:
         """start the SSE client in current OS thread."""
@@ -72,17 +73,12 @@ class CrownstoneSSE(Thread):
 
         if self.access_token is None:
             if not self.email or not self.password:
-                _LOGGER.error("No access token available and no email/password provided. Use .set_user_information()")
+                _LOGGER.error("No access token available and no email/password provided. Use .set_access_token")
             else:
                 await self.login()
 
         # create events for stop trigger
         self.stop_event = asyncio.Event()
-
-        # add handler to loop for sigterm and sigint (linux)
-        if sys.platform != "win32":
-            self.loop.add_signal_handler(signal.SIGTERM, self.signal_handler, 0)
-            self.loop.add_signal_handler(signal.SIGINT, self.signal_handler, 0)
 
         # Connect to the event server & start streaming
         await self.connect()
@@ -158,6 +154,9 @@ class CrownstoneSSE(Thread):
             # Connection was lost, payload uncompleted. try to reconnect
             # .connect() will handle further reconnection
             await self.connect()
+        except KeyboardInterrupt:
+            # Ctrl + C pressed or other command that causes interrupt
+            await self.async_stop()
 
     async def fire_events(self, data) -> None:
         """Fire event based on the data"""
@@ -193,17 +192,6 @@ class CrownstoneSSE(Thread):
                     event = PresenceEvent(data)
                     self.event_bus.fire(presence_event, event)
 
-    def signal_handler(self) -> None:
-        """
-        Signal handler for main event loop.
-        Linux only;
-        SIGTERM: Terminate the process. Sent by an other process.
-        SIGINT: Interrupt the process. (Ctrl + C pressed).
-        """
-        self.loop.remove_signal_handler(signal.SIGTERM)
-        self.loop.remove_signal_handler(signal.SIGINT)
-        self.loop.create_task(self.async_stop())
-
     def add_event_listener(self, event_type, callback):
         self.event_bus.add_event_listener(event_type=event_type, event_listener=callback)
 
@@ -213,9 +201,7 @@ class CrownstoneSSE(Thread):
         await self.connect()
 
     def stop(self) -> None:
-        """
-        Stop the Crownstone SSE client from an other thread.
-        """
+        """Stop the Crownstone SSE client from an other thread."""
         # ignore if not running
         if self.state == 'not_running':
             return
