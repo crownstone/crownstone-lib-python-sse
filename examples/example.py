@@ -5,11 +5,9 @@ Created by Ricardo Steijn.
 Last update on 11-5-2020
 """
 from sseclient.client import CrownstoneSSE
-from sseclient.events import (
-    SwitchStateUpdateEvent,
-    PresenceEvent,
-    SystemEvent
-)
+from sseclient.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
+from sseclient.events.SystemEvent import SystemEvent
+from sseclient.events.PresenceEvent import PresenceEvent
 from sseclient.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,

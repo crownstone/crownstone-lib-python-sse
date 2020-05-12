@@ -8,7 +8,7 @@ from aiohttp import (
     ClientConnectionError,
     ClientPayloadError
 )
-from sseclient.eventbus import EventBus
+from sseclient.util.eventbus import EventBus
 from sseclient.const import (
     EVENT_CLIENT_STOP,
     EVENT_BASE_URL,
@@ -22,13 +22,11 @@ from sseclient.const import (
     data_change_events,
     operations
 )
-from sseclient.events import (
-    SystemEvent,
-    CommandEvent,
-    PresenceEvent,
-    DataChangeEvent,
-    SwitchStateUpdateEvent
-)
+from sseclient.events.SystemEvent import SystemEvent
+from sseclient.events.CommandEvent import CommandEvent
+from sseclient.events.DataChangeEvent import DataChangeEvent
+from sseclient.events.PresenceEvent import PresenceEvent
+from sseclient.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
 from sseclient.exceptions import (
     sse_exception_handler,
     CrownstoneSseException,
