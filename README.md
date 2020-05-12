@@ -106,32 +106,39 @@ A system event is represented as:
 
 ### Command event
 A command event is represented as:
+#### Sphere
 * sphere_id
+#### Crownstone
 * cloud_id
 * unique_id
 * switch_state
 
 ### Data change event
 A data change event is represented as:
+* operation (update | delete | create)
+#### Sphere
 * sphere_id
+#### Item
 * changed_item_id
 * changed_item_name
 
 ### Presence event
 A presence event is represented as:
+#### Sphere
 * sphere_id
+#### Location
 * location_id
+#### User
 * user_id
 
 ### Switch state update event
 A switch state update event is represented as:
+#### Sphere
 * sphere_id
+#### Crownstone
 * cloud_id
 * unique_id
 * switch_state
-
-## More information
-For more detailed information about the events, please refer to [crownstone-lib-nodejs-sse](https://github.com/crownstone/crownstone-lib-nodejs-sse/blob/master/README.md)
 
 ## Testing
 Tests coming soon!
