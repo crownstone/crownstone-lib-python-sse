@@ -35,11 +35,11 @@ $ python setup.py install
 ## Getting started
 ### Example
 ```python
-from sseclient.client import CrownstoneSSE
-from sseclient.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from sseclient.events.SystemEvent import SystemEvent
-from sseclient.events.PresenceEvent import PresenceEvent
-from sseclient.const import (
+from crownstone_sse.client import CrownstoneSSE
+from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
+from crownstone_sse.events.SystemEvent import SystemEvent
+from crownstone_sse.events.PresenceEvent import PresenceEvent
+from crownstone_sse.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,
     EVENT_PRESENCE_ENTER_LOCATION,

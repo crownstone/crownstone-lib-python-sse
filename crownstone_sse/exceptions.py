@@ -10,6 +10,12 @@ class ConnectError(Enum):
     CONNECTION_FAILED_NO_INTERNET = 'CONNECTION_FAILED_NO_INTERNET'
 
 
+class AuthError(Enum):
+    AUTHENTICATION_ERROR = 'WRONG_EMAIL_PASSWORD'
+    EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED'
+    UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+
+
 class CrownstoneSseException(Exception):
     type = None
     message = None

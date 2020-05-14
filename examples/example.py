@@ -2,24 +2,24 @@
 Example receiving Crownstone SSE events and creating callbacks for the received data.
 
 Created by Ricardo Steijn.
-Last update on 11-5-2020
+Last update on 14-5-2020
 """
-from sseclient.client import CrownstoneSSE
-from sseclient.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from sseclient.events.SystemEvent import SystemEvent
-from sseclient.events.PresenceEvent import PresenceEvent
-from sseclient.const import (
+from crownstone_sse.client import CrownstoneSSE
+from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
+from crownstone_sse.events.SystemEvent import SystemEvent
+from crownstone_sse.events.PresenceEvent import PresenceEvent
+from crownstone_sse.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,
     EVENT_PRESENCE_ENTER_LOCATION,
 )
+import time
 
 
 def crownstone_update(event: SwitchStateUpdateEvent):
     print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
     # It is possible to stop the client after it has been fully started.
     # e.g. after an event was received.
-    sse_client.stop()
 
 
 def notify_stream_start(event: SystemEvent):
@@ -43,3 +43,8 @@ sse_client.start()
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
 sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, crownstone_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
+
+# block for 20 seconds (let the client run for 20 second before stopping)
+time.sleep(20)
+# stop the client
+sse_client.stop()

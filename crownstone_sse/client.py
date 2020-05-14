@@ -8,8 +8,8 @@ from aiohttp import (
     ClientConnectionError,
     ClientPayloadError
 )
-from sseclient.util.eventbus import EventBus
-from sseclient.const import (
+from crownstone_sse.util.eventbus import EventBus
+from crownstone_sse.const import (
     EVENT_CLIENT_STOP,
     EVENT_BASE_URL,
     LOGIN_URL,
@@ -22,15 +22,16 @@ from sseclient.const import (
     data_change_events,
     operations
 )
-from sseclient.events.SystemEvent import SystemEvent
-from sseclient.events.CommandEvent import CommandEvent
-from sseclient.events.DataChangeEvent import DataChangeEvent
-from sseclient.events.PresenceEvent import PresenceEvent
-from sseclient.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from sseclient.exceptions import (
+from crownstone_sse.events.SystemEvent import SystemEvent
+from crownstone_sse.events.CommandEvent import CommandEvent
+from crownstone_sse.events.DataChangeEvent import DataChangeEvent
+from crownstone_sse.events.PresenceEvent import PresenceEvent
+from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
+from crownstone_sse.exceptions import (
     sse_exception_handler,
     CrownstoneSseException,
     ConnectError,
+    AuthError,
 )
 from typing import Optional
 
@@ -97,9 +98,18 @@ class CrownstoneSSE(Thread):
         # login
         try:
             async with self.websession.post(LOGIN_URL, data=data) as result:
-                result.raise_for_status()
                 data = await result.json()
-                self.access_token = data['id']
+                if result.status == 200:
+                    self.access_token = data['id']
+                elif result.status == 401:
+                    if 'error' in data:
+                        error = data['error']
+                        if error['code'] == 'LOGIN_FAILED':
+                            raise CrownstoneSseException(AuthError.AUTHENTICATION_ERROR, "Wrong email/password")
+                        elif error['code'] == 'LOGIN_FAILED_EMAIL_NOT_VERIFIED':
+                            raise CrownstoneSseException(AuthError.EMAIL_NOT_VERIFIED, "Email not verified")
+                else:
+                    raise CrownstoneSseException(AuthError.UNKNOWN_ERROR, "Unknown error occurred")
         except ClientConnectionError:
             raise CrownstoneSseException(ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection")
 
@@ -126,27 +136,38 @@ class CrownstoneSSE(Thread):
         self.state = "running"
 
         try:
+            line_in_bytes = b''
             while stream_response.status != 204:  # no data
                 # break if stop event is set after stop received
                 if self.stop_event.is_set():
                     break
 
-                # read one line of data from the stream
-                line_in_bytes = await stream_reader.readline()
-                line = line_in_bytes.decode('utf8')  # string
-                line = line.rstrip('\n').rstrip('\r')  # remove returns
+                # read the buffer of the stream
+                chunk = stream_reader.read_nowait()
+                for line in chunk.splitlines(True):
+                    line_in_bytes += line
+                    if line_in_bytes.endswith((b'\r\r', b'\n\n', b'\r\n\r\n')):
+                        line = line_in_bytes.decode('utf8')  # string
+                        line = line.rstrip('\n').rstrip('\r')  # remove returns
 
-                if line.startswith(':'):
-                    # ignore :ping
-                    continue
+                        if line.startswith(':'):
+                            # ignore :ping
+                            continue
 
-                if line.startswith('data:'):
-                    line = line.lstrip('data:')
-                    data = json.loads(line)  # type dict
-                    await self.fire_events(data)
+                        if line.startswith('data:'):
+                            line = line.lstrip('data:')
+                            data = json.loads(line)  # type dict
+                            # check for access token expiration and login + restart client
+                            # no need to fire event for this first
+                            if data['type'] == 'system' and data['subType'] == EVENT_SYSTEM_TOKEN_EXPIRED:
+                                await self.refresh_token()
+                            # handle firing of events
+                            self.fire_events(data)
 
-                # de-block the main event loop to allow stop task to run
-                await asyncio.sleep(1)
+                        line_in_bytes = b''
+
+                # let buffer fill itself with data
+                await asyncio.sleep(0.05)
 
         except ClientPayloadError:
             # Connection was lost, payload uncompleted. try to reconnect
@@ -156,13 +177,11 @@ class CrownstoneSSE(Thread):
             # Ctrl + C pressed or other command that causes interrupt
             await self.async_stop()
 
-    async def fire_events(self, data) -> None:
+    def fire_events(self, data) -> None:
         """Fire event based on the data"""
         if data['type'] == 'system':
             for system_event in system_events:
                 if data['subType'] == system_event:
-                    if system_event == EVENT_SYSTEM_TOKEN_EXPIRED:
-                        await self.refresh_token()
                     event = SystemEvent(data)
                     self.event_bus.fire(system_event, event)
 
@@ -214,7 +233,6 @@ class CrownstoneSSE(Thread):
             _LOGGER.warning("stop already called")
             return
 
-        self.stop_event.set()
         self.state = "stopping"
         self.event_bus.fire(EVENT_CLIENT_STOP)  # for callback
 
@@ -222,4 +240,5 @@ class CrownstoneSSE(Thread):
         await self.websession.close()
 
         self.state = "not_running"
+        self.stop_event.set()
         _LOGGER.warning("Crownstone SSE client stopped.")
