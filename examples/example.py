@@ -18,8 +18,6 @@ import time
 
 def crownstone_update(event: SwitchStateUpdateEvent):
     print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
-    # It is possible to stop the client after it has been fully started.
-    # e.g. after an event was received.
 
 
 def notify_stream_start(event: SystemEvent):
