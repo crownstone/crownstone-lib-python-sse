@@ -44,13 +44,10 @@ from crownstone_sse.const import (
     EVENT_SWITCH_STATE_UPDATE,
     EVENT_PRESENCE_ENTER_LOCATION,
 )
-
+import time
 
 def crownstone_update(event: SwitchStateUpdateEvent):
     print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
-    # It is possible to stop the client after it has been fully started.
-    # e.g. after an event was received.
-    sse_client.stop()
 
 
 def notify_stream_start(event: SystemEvent):
@@ -74,6 +71,12 @@ sse_client.start()
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
 sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, crownstone_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
+
+# let the client run for 20 seconds (block)
+time.sleep(20)
+
+# stop the client
+sse_client.stop()
 ```
 ### Creating callbacks
 Callbacks are functions that will be executed everytime an event comes in of an specific event type.<br>
