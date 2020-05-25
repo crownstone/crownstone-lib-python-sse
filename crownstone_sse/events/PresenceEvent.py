@@ -1,9 +1,10 @@
 class PresenceEvent:
     """Presence SSE event"""
 
-    def __init__(self, data) -> None:
+    def __init__(self, data, type) -> None:
         """Init event"""
         self.data = data
+        self.type = type
 
     @property
     def sphere_id(self) -> str:

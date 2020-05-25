@@ -202,7 +202,7 @@ class CrownstoneSSE(Thread):
         if data['type'] == 'presence':
             for presence_event in presence_events:
                 if data['subType'] == presence_event:
-                    event = PresenceEvent(data)
+                    event = PresenceEvent(data, presence_event)
                     self.event_bus.fire(presence_event, event)
 
     def add_event_listener(self, event_type, callback):
