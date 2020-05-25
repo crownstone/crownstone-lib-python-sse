@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='crownstone-lib-python-sse',
-    version='1.0',
+    version='1.0.4',
     url='https://github.com/RicArch97/crownstone-lib-python-sse',
     author='Ricardo Steijn',
     description='Async python SSE client to receive Crownstone events',

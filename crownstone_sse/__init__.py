@@ -2,4 +2,4 @@
 from crownstone_sse.client import CrownstoneSSE
 from crownstone_sse.util.eventbus import EventBus
 
-__version__ = '1.0.3'
+__version__ = '1.0.4'

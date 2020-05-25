@@ -1,9 +1,10 @@
 class DataChangeEvent:
     """Data Change SSE event"""
 
-    def __init__(self, data, operation) -> None:
+    def __init__(self, data, type, operation) -> None:
         """Init event"""
         self.data = data
+        self.type = type
         self.operation = operation
 
     @property

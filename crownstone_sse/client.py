@@ -196,7 +196,7 @@ class CrownstoneSSE(Thread):
                 if data['subType'] == data_change_event:
                     for operation in operations:
                         if data['operation'] == operation:
-                            event = DataChangeEvent(data, operation)
+                            event = DataChangeEvent(data, data_change_event, operation)
                             self.event_bus.fire(data_change_event, event)
 
         if data['type'] == 'presence':
