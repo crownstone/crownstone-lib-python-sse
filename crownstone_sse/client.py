@@ -150,10 +150,6 @@ class CrownstoneSSE(Thread):
                         line = line_in_bytes.decode('utf8')  # string
                         line = line.rstrip('\n').rstrip('\r')  # remove returns
 
-                        if line.startswith(':'):
-                            # ignore :ping
-                            continue
-
                         if line.startswith('data:'):
                             line = line.lstrip('data:')
                             data = json.loads(line)  # type dict
