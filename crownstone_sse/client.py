@@ -15,6 +15,7 @@ from crownstone_sse.const import (
     LOGIN_URL,
     RECONNECTION_TIME,
     EVENT_SYSTEM_TOKEN_EXPIRED,
+    EVENT_SYSTEM_NO_CONNECTION,
     EVENT_SWITCH_STATE_UPDATE,
     system_events,
     presence_events,
@@ -49,7 +50,6 @@ class CrownstoneSSE(Thread):
         self.event_bus: EventBus = EventBus()
         self.state = "not_running"
         self.stop_event: Optional[asyncio.Event] = None
-        self.stopped: bool = False
         # Instance information
         self.access_token: Optional[str] = None
         self.email = email
@@ -138,10 +138,6 @@ class CrownstoneSSE(Thread):
         try:
             line_in_bytes = b''
             while stream_response.status != 204:  # no data
-                # break if stop event is set after stop received
-                if self.stop_event.is_set():
-                    break
-
                 # read the buffer of the stream
                 chunk = stream_reader.read_nowait()
                 for line in chunk.splitlines(True):
@@ -157,16 +153,25 @@ class CrownstoneSSE(Thread):
                             # no need to fire event for this first
                             if data['type'] == 'system' and data['subType'] == EVENT_SYSTEM_TOKEN_EXPIRED:
                                 await self.refresh_token()
+                            # check for no connection between the sse server and the crownstone cloud
+                            # simply try to reconnect
+                            if data['type'] == 'system' and data['subType'] == EVENT_SYSTEM_NO_CONNECTION:
+                                await self.connect()
                             # handle firing of events
                             self.fire_events(data)
 
                         line_in_bytes = b''
 
+                # break if stop event is set after stop received
+                # at the end of the loop for testing purposes
+                if self.stop_event.is_set():
+                    break
+
                 # let buffer fill itself with data
                 await asyncio.sleep(0.05)
 
         except ClientPayloadError:
-            # Connection was lost, payload uncompleted. try to reconnect
+            # Internet connection was lost, payload uncompleted. try to reconnect
             # .connect() will handle further reconnection
             await self.connect()
         except KeyboardInterrupt:

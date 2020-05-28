@@ -28,7 +28,7 @@ def notify_presence_changed(event: PresenceEvent):
     print("User {} has entered location {}".format(event.user_id, event.location_id))
 
 
-# Create a sse client instance. Pass your crownstone account your information.
+# Create a sse client instance. Pass your crownstone account information.
 # email and password are required for logging in again when an access token has expired.
 sse_client = CrownstoneSSE('email', 'password')
 # for usage with existing access token you can use this function:
