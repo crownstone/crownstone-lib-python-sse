@@ -113,7 +113,7 @@ class CrownstoneSSE(Thread):
         except ClientConnectionError:
             raise CrownstoneSseException(ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection")
 
-        _LOGGER.warning("Login successful")
+        _LOGGER.info("Login successful")
 
     async def connect(self):
         """
@@ -134,6 +134,7 @@ class CrownstoneSSE(Thread):
         stream_reader = stream_response.content
         # client is now running, and can be stopped
         self.state = "running"
+        _LOGGER.info("Crownstone SSE Client has started.")
 
         try:
             line_in_bytes = b''
@@ -242,4 +243,4 @@ class CrownstoneSSE(Thread):
 
         self.state = "not_running"
         self.stop_event.set()
-        _LOGGER.warning("Crownstone SSE client stopped.")
+        _LOGGER.info("Crownstone SSE client stopped.")
