@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setup(
     name='crownstone-sse',
     version='1.1.1',
-    url='https://github.com/RicArch97/crownstone-lib-python-sse',
+    url='https://github.com/crownstone/crownstone-lib-python-sse',
     author='Crownstone B.V.',
     long_description=long_description,
     long_description_content_type="text/markdown",
