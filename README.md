@@ -9,7 +9,7 @@ Asynchronous Python library that listens to Crownstone SSE events.
 
 ## Requirements
 * Python 3.7 or higher
-* Aiohttp 3.6.2
+* Aiohttp 3.6.1
 
 ## Standard installation
 cd to the project folder and run:
@@ -39,12 +39,19 @@ from crownstone_sse.client import CrownstoneSSE
 from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
 from crownstone_sse.events.SystemEvent import SystemEvent
 from crownstone_sse.events.PresenceEvent import PresenceEvent
+from crownstone_sse.events.AbilityChangeEvent import AbilityChangeEvent
 from crownstone_sse.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,
     EVENT_PRESENCE_ENTER_LOCATION,
+    EVENT_ABILITY_CHANGE_DIMMING,
 )
+import logging
 import time
+
+# enable logging
+logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
+
 
 def crownstone_update(event: SwitchStateUpdateEvent):
     print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
@@ -56,6 +63,10 @@ def notify_stream_start(event: SystemEvent):
 
 def notify_presence_changed(event: PresenceEvent):
     print("User {} has entered location {}".format(event.user_id, event.location_id))
+
+
+def notify_ability_changed(event: AbilityChangeEvent):
+    print("Ability {} has been {}".format(event.ability_type, event.ability_enabled))
 
 
 # Create a sse client instance. Pass your crownstone account information.
@@ -71,10 +82,10 @@ sse_client.start()
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
 sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, crownstone_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
+sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
 
-# let the client run for 20 seconds (block)
-time.sleep(20)
-
+# block for 120 seconds (let the client run for 120 second before stopping)
+time.sleep(120)
 # stop the client
 sse_client.stop()
 ```
@@ -95,12 +106,13 @@ def callback(event: PresenceEvent):
 ```
 
 ## Event types
-Currently, there are 5 different event types:
+Currently, there are 6 different event types:
 * System event
 * Command event
 * Data change event
 * Presence event
 * Switch state update event
+* Ability change event
 
 ### System event
 A system event is represented as:
@@ -142,6 +154,18 @@ A switch state update event is represented as:
 * cloud_id
 * unique_id
 * switch_state
+
+### Ability change event
+An ability change event is represented as:
+#### Sphere
+* sphere_id
+#### Crownstone
+* cloud_id
+* unique_id
+#### Ability
+* ability_type
+* ability_enabled
+* ability_synced_to_crownstone
 
 ## Testing
 To run the tests using tox install tox first by running:

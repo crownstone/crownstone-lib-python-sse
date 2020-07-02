@@ -8,6 +8,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class ConnectError(Enum):
     CONNECTION_FAILED_NO_INTERNET = 'CONNECTION_FAILED_NO_INTERNET'
+    CONNECTION_TIMEOUT = 'CONNECTION_TIMEOUT'
 
 
 class AuthError(Enum):
@@ -17,6 +18,15 @@ class AuthError(Enum):
 
 
 class CrownstoneSseException(Exception):
+    type = None
+    message = None
+
+    def __init__(self, type, message=None):
+        self.type = type
+        self.message = message
+
+
+class CrownstoneConnectionTimeout(Exception):
     type = None
     message = None
 

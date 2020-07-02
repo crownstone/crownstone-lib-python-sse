@@ -7,6 +7,7 @@ LOGIN_URL = "https://cloud.crownstone.rocks/api/users/login"
 # SSE client
 EVENT_CLIENT_STOP = "client_stop"
 RECONNECTION_TIME = 30
+CONNECTION_TIMEOUT = 40
 
 # SSE System events
 EVENT_SYSTEM = "system"
@@ -24,6 +25,7 @@ EVENT_DATA_CHANGE_USERS = "users"
 EVENT_DATA_CHANGE_LOCATIONS = "locations"
 
 # dataChange operations
+OPERATION = "operation"
 OPERATION_CREATE = "create"
 OPERATION_DELETE = "delete"
 OPERATION_UPDATE = "update"
@@ -36,10 +38,38 @@ EVENT_COMMAND = "command"
 EVENT_COMMAND_SWITCH_CROWNSTONE = "switchCrownstone"
 
 # SSE presence events
+EVENT_PRESENCE = "presence"
 EVENT_PRESENCE_ENTER_SPHERE = "enterSphere"
 EVENT_PRESENCE_EXIT_SPHERE = "exitSphere"
 EVENT_PRESENCE_ENTER_LOCATION = "enterLocation"
 EVENT_PRESENCE_EXIT_LOCATION = "exitLocation"
+
+# SSE abilityChange events
+EVENT_ABILITY_CHANGE = "abilityChange"
+EVENT_ABILITY_CHANGE_DIMMING = "dimming"
+EVENT_ABILITY_CHANGE_SWITCHCRAFT = "switchcraft"
+EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE = "tapToToggle"
+
+# syntax
+TYPE = "type"
+SUBTYPE = "subType"
+ID = "id"
+ERROR = "error"
+CODE = "code"
+UTF8 = "utf-8"
+
+# SSE data prefix
+DATA = "data:"
+PING = ":ping"
+
+# errors
+LOGIN_FAILED = "LOGIN_FAILED"
+LOGIN_FAILED_EMAIL_NOT_VERIFIED = "LOGIN_FAILED_EMAIL_NOT_VERIFIED"
+
+# SSE states
+RUNNING = "running"
+NOT_RUNNING = "not_running"
+STOPPING = "stopping"
 
 # lists for iteration
 system_events = [
@@ -62,6 +92,12 @@ data_change_events = [
     EVENT_DATA_CHANGE_SPHERES,
     EVENT_DATA_CHANGE_CROWNSTONE,
     EVENT_DATA_CHANGE_LOCATIONS,
+]
+
+ability_change_events = [
+    EVENT_ABILITY_CHANGE_DIMMING,
+    EVENT_ABILITY_CHANGE_SWITCHCRAFT,
+    EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE
 ]
 
 command_events = [

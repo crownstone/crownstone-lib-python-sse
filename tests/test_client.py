@@ -118,14 +118,6 @@ class TestCrownstoneSSE(asynctest.TestCase):
         # test refresh call
         refresh_mock.assert_called_once()
 
-        # mock no connection to cloud
-        mock_stream.return_value = no_connection_data
-        with asynctest.patch.object(CrownstoneSSE, 'connect') as connect_mock:
-            await self.sse_client.stream(mock_stream_response)
-
-        # test reconnection
-        connect_mock.assert_called_once()
-
         # mock connect function
         mock_stream.side_effect = aiohttp.ClientPayloadError('test')
         with asynctest.patch.object(CrownstoneSSE, 'connect') as connect_mock:
