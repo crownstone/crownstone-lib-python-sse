@@ -119,14 +119,25 @@ A system event is represented as:
 * code
 * message
 
-### Command event
-A command event is represented as:
+### Switch command event
+A switch command event is represented as:
 #### Sphere
 * sphere_id
 #### Crownstone
 * cloud_id
 * unique_id
-* switch_state
+* switch_val (percentage or special value)
+
+### Multi Switch command event
+A multi switch command event is represented as:
+#### Sphere
+* sphere_id
+#### Crownstone list
+* crownstone_list
+#### Each crownstone in the list:
+* cloud_id
+* unique_id
+* switch_val (percentage or special value)
 
 ### Data change event
 A data change event is represented as:
@@ -153,7 +164,7 @@ A switch state update event is represented as:
 #### Crownstone
 * cloud_id
 * unique_id
-* switch_state
+* switch_state (percentage)
 
 ### Ability change event
 An ability change event is represented as:

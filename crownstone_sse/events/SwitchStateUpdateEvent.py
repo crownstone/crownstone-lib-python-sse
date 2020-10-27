@@ -18,5 +18,5 @@ class SwitchStateUpdateEvent:
         return self.data['crownstone']['uid']
 
     @property
-    def switch_state(self) -> float:
-        return self.data['crownstone']['switchState']
+    def switch_state(self) -> int:
+        return int(self.data['crownstone']['percentage'])

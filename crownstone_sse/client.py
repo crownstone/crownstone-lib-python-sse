@@ -9,6 +9,7 @@ from aiohttp import (
     ClientConnectionError,
     ClientPayloadError
 )
+
 from crownstone_sse.util.eventbus import EventBus
 from crownstone_sse.const import (
     EVENT_BASE_URL, LOGIN_URL,
@@ -34,8 +35,11 @@ from crownstone_sse.const import (
     RUNNING, NOT_RUNNING, STOPPING,
     LOGIN_FAILED, LOGIN_FAILED_EMAIL_NOT_VERIFIED
 )
+import crownstone_sse
+
 from crownstone_sse.events.SystemEvent import SystemEvent
-from crownstone_sse.events.CommandEvent import CommandEvent
+from crownstone_sse.events.MultiSwitchCommandEvent import MultiSwitchCommandEvent
+from crownstone_sse.events.SwitchCommandEvent import SwitchCommandEvent
 from crownstone_sse.events.DataChangeEvent import DataChangeEvent
 from crownstone_sse.events.PresenceEvent import PresenceEvent
 from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
@@ -230,10 +234,12 @@ class CrownstoneSSE(Thread):
                     self.event_bus.fire(system_event, event)
 
         if data[TYPE] == EVENT_COMMAND:
-            for command_event in command_events:
-                if data[SUBTYPE] == command_event:
-                    event = CommandEvent(data)
-                    self.event_bus.fire(command_event, event)
+            if data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_CROWNSTONE:
+                event = SwitchCommandEvent(data)
+                self.event_bus.fire(data[SUBTYPE], event)
+            elif data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
+                event = MultiSwitchCommandEvent(data)
+                self.event_bus.fire(data[SUBTYPE], event)
 
         if data[TYPE] == EVENT_SWITCH_STATE_UPDATE:
             event = SwitchStateUpdateEvent(data)

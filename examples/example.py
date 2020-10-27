@@ -22,8 +22,8 @@ import time
 logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
 
 
-def crownstone_update(event: SwitchStateUpdateEvent):
-    print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
+def switch_update(event: SwitchStateUpdateEvent):
+    print("Crownstone {} switch state changed to {}".format(event.cloud_id, event.switch_state))
 
 
 def notify_stream_start(event: SystemEvent):
@@ -49,7 +49,7 @@ sse_client.start()
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
-sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, crownstone_update)
+sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, switch_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
 sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
 

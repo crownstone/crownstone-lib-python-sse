@@ -36,6 +36,7 @@ EVENT_SWITCH_STATE_UPDATE = "switchStateUpdate"
 # SSE command events
 EVENT_COMMAND = "command"
 EVENT_COMMAND_SWITCH_CROWNSTONE = "switchCrownstone"
+EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES = "multiSwitch"
 
 # SSE presence events
 EVENT_PRESENCE = "presence"
@@ -101,7 +102,8 @@ ability_change_events = [
 ]
 
 command_events = [
-    EVENT_COMMAND_SWITCH_CROWNSTONE
+    EVENT_COMMAND_SWITCH_CROWNSTONE,
+    EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES
 ]
 
 operations = [
