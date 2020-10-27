@@ -126,7 +126,7 @@ A switch command event is represented as:
 #### Crownstone
 * cloud_id
 * unique_id
-* switch_val (percentage or special value)
+* switch_val (as SwitchCommandValue)
 
 ### Multi Switch command event
 A multi switch command event is represented as:
@@ -137,7 +137,7 @@ A multi switch command event is represented as:
 #### Each crownstone in the list:
 * cloud_id
 * unique_id
-* switch_val (percentage or special value)
+* switch_val (as SwitchCommandValue)
 
 ### Data change event
 A data change event is represented as:

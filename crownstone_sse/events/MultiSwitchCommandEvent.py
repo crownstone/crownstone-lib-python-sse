@@ -1,3 +1,6 @@
+from crownstone_sse.SwitchCommandValue import SwitchCommandValue, SwitchCommandType
+
+
 class MultiSwitchCommandEvent:
     """Command SSE event requesting to switch a list of crownstones"""
 
@@ -31,22 +34,21 @@ class SwitchCommand:
         return self.data['uid']
 
     @property
-    def switch_val(self) -> int:
-        switch_val = 0
-
+    def switch_val(self) -> SwitchCommandValue:
         if self.data['type'] == 'TURN_ON':
-            # switch_val = SwitchValSpecial.SMART_ON
-            switch_val = 255
+            return SwitchCommandValue(SwitchCommandType.TURN_ON)
 
         elif self.data['type'] == 'TURN_OFF':
-            switch_val = 0
+            return SwitchCommandValue(SwitchCommandType.TURN_OFF)
 
         elif self.data['type'] == 'PERCENTAGE':
-            switch_val = int(self.data['percentage'])
-            if self.switch_val < 0:
-                switch_val = 0
-            if self.switch_val > 100:
-                switch_val = 100
+            percentage = int(self.data['percentage'])
+            if percentage < 0:
+                percentage = 0
+            if percentage > 100:
+                percentage = 100
+            return SwitchCommandValue(SwitchCommandType.PERCENTAGE, percentage)
 
-        return switch_val
+        else:
+            return SwitchCommandValue(SwitchCommandType.UNKNOWN)
 
