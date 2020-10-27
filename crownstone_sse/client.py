@@ -234,10 +234,7 @@ class CrownstoneSSE(Thread):
                     self.event_bus.fire(system_event, event)
 
         if data[TYPE] == EVENT_COMMAND:
-            if data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_CROWNSTONE:
-                event = SwitchCommandEvent(data)
-                self.event_bus.fire(data[SUBTYPE], event)
-            elif data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
+            if data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
                 event = MultiSwitchCommandEvent(data)
                 self.event_bus.fire(data[SUBTYPE], event)
 
