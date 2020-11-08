@@ -17,6 +17,7 @@ from crownstone_sse.const import (
     CONNECTION_TIMEOUT,
     EVENT_SYSTEM,
     EVENT_COMMAND,
+    EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES,
     EVENT_PRESENCE,
     EVENT_DATA_CHANGE,
     OPERATION,
@@ -232,7 +233,7 @@ class CrownstoneSSE(Thread):
                     self.event_bus.fire(system_event, event)
 
         if data[TYPE] == EVENT_COMMAND:
-            if data[SUBTYPE] == crownstone_sse.const.EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
+            if data[SUBTYPE] == EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
                 event = MultiSwitchCommandEvent(data)
                 self.event_bus.fire(data[SUBTYPE], event)
 
