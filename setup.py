@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='crownstone-sse',
-    version='1.2.0',
+    version='1.2.1',
     url='https://github.com/crownstone/crownstone-lib-python-sse',
     author='Crownstone B.V.',
     long_description=long_description,
@@ -13,7 +13,8 @@ setup(
     packages=find_packages(exclude=['examples', 'tests']),
     install_requires=list(package.strip() for package in open('requirements.txt')),
     classifiers=[
-        'Programming Language :: Python :: 3.7'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8'
     ],
     python_requires='>=3.7',
 )
