@@ -9,22 +9,22 @@ Asynchronous Python library that listens to Crownstone SSE events.
 
 ## Requirements
 * Python 3.7 or higher
-* Aiohttp 3.6.1
+* Aiohttp 3.6.2
 
 ## Standard installation
 cd to the project folder and run:
 ```console
-$ python3.7 setup.py install
+$ python setup.py install
 ```
 
 ## Install in a virtual environment
-To install the library excute the following command:
+To install the library execute the following command:
 ```console
-$ python3.7 -m venv venv3.7
+$ python -m venv venv
 ```
 Activate your venv using:
 ```console
-$ source venv3.7/bin/activate
+$ source venv/bin/activate
 ```
 Once activated, the venv is used to executed python files, and libraries will be installed in the venv.<br>
 To install this library, cd to the project folder and run:
@@ -36,10 +36,10 @@ $ python setup.py install
 ### Example
 ```python
 from crownstone_sse.client import CrownstoneSSE
-from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from crownstone_sse.events.SystemEvent import SystemEvent
-from crownstone_sse.events.PresenceEvent import PresenceEvent
-from crownstone_sse.events.AbilityChangeEvent import AbilityChangeEvent
+from crownstone_sse.events.switch_state_update_event import SwitchStateUpdateEvent
+from crownstone_sse.events.system_event import SystemEvent
+from crownstone_sse.events.presence_event import PresenceEvent
+from crownstone_sse.events.ability_change_event import AbilityChangeEvent
 from crownstone_sse.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,
@@ -53,8 +53,8 @@ import time
 logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
 
 
-def crownstone_update(event: SwitchStateUpdateEvent):
-    print("Crownstone {} state changed to {}".format(event.cloud_id, event.switch_state))
+def switch_update(event: SwitchStateUpdateEvent):
+    print("Crownstone {} switch state changed to {}".format(event.cloud_id, event.switch_state))
 
 
 def notify_stream_start(event: SystemEvent):
@@ -80,7 +80,7 @@ sse_client.start()
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
-sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, crownstone_update)
+sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, switch_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
 sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
 

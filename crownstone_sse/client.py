@@ -27,7 +27,6 @@ from crownstone_sse.const import (
     EVENT_SYSTEM_NO_CONNECTION,
     system_events,
     presence_events,
-    command_events,
     data_change_events,
     ability_change_events,
     operations,
@@ -37,13 +36,12 @@ from crownstone_sse.const import (
 )
 import crownstone_sse
 
-from crownstone_sse.events.SystemEvent import SystemEvent
-from crownstone_sse.events.MultiSwitchCommandEvent import MultiSwitchCommandEvent
-from crownstone_sse.events.SwitchCommandEvent import SwitchCommandEvent
-from crownstone_sse.events.DataChangeEvent import DataChangeEvent
-from crownstone_sse.events.PresenceEvent import PresenceEvent
-from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from crownstone_sse.events.AbilityChangeEvent import AbilityChangeEvent
+from crownstone_sse.events.system_event import SystemEvent
+from crownstone_sse.events.multi_switch_command_event import MultiSwitchCommandEvent
+from crownstone_sse.events.data_change_event import DataChangeEvent
+from crownstone_sse.events.presence_event import PresenceEvent
+from crownstone_sse.events.switch_state_update_event import SwitchStateUpdateEvent
+from crownstone_sse.events.ability_change_event import AbilityChangeEvent
 from crownstone_sse.exceptions import (
     sse_exception_handler,
     CrownstoneSseException,

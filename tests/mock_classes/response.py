@@ -25,5 +25,6 @@ class MockStreamResponse:
     def __init__(self, status):
         self.status = status
         self.content = aiohttp.StreamReader(
-            protocol=asynctest.Mock()
+            protocol=asynctest.Mock(),
+            limit=2**16
         )

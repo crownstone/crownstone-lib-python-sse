@@ -10,7 +10,7 @@ from tests.mock_classes.response import MockResponse, MockStreamResponse
 from tests.mocked_replies.stream_response import stream_data, token_expired_data, no_connection_data
 from tests.mocked_replies.login_errors import auth_error, not_verified
 from tests.mocked_events.system_events import stream_start
-from crownstone_sse.events.SystemEvent import SystemEvent
+from crownstone_sse.events.system_event import SystemEvent
 
 
 class TestCrownstoneSSE(asynctest.TestCase):

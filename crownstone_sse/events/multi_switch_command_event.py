@@ -1,4 +1,7 @@
-from crownstone_sse.SwitchCommandValue import SwitchCommandValue, SwitchCommandType
+from crownstone_sse.helpers.switch_command_value import (
+    SwitchCommandValue, 
+    SwitchCommandType
+)
 
 
 class MultiSwitchCommandEvent:

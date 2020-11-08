@@ -5,10 +5,10 @@ Created by Ricardo Steijn.
 Last update on 2-7-2020
 """
 from crownstone_sse.client import CrownstoneSSE
-from crownstone_sse.events.SwitchStateUpdateEvent import SwitchStateUpdateEvent
-from crownstone_sse.events.SystemEvent import SystemEvent
-from crownstone_sse.events.PresenceEvent import PresenceEvent
-from crownstone_sse.events.AbilityChangeEvent import AbilityChangeEvent
+from crownstone_sse.events.switch_state_update_event import SwitchStateUpdateEvent
+from crownstone_sse.events.system_event import SystemEvent
+from crownstone_sse.events.presence_event import PresenceEvent
+from crownstone_sse.events.ability_change_event import AbilityChangeEvent
 from crownstone_sse.const import (
     EVENT_SYSTEM_STREAM_START,
     EVENT_SWITCH_STATE_UPDATE,
