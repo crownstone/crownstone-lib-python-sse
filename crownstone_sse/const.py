@@ -9,6 +9,9 @@ EVENT_CLIENT_STOP = "client_stop"
 RECONNECTION_TIME = 30
 CONNECTION_TIMEOUT = 40
 
+# SSE Ping event
+EVENT_PING = "ping"
+
 # SSE System events
 EVENT_SYSTEM = "system"
 EVENT_SYSTEM_TOKEN_EXPIRED = 'TOKEN_EXPIRED'
@@ -60,7 +63,6 @@ UTF8 = "utf-8"
 
 # SSE data prefix
 DATA = "data:"
-PING = ":ping"
 
 # errors
 LOGIN_FAILED = "LOGIN_FAILED"

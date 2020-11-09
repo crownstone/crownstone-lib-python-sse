@@ -17,4 +17,4 @@ class DataChangeEvent:
 
     @property
     def changed_item_name(self) -> str:
-        return self.data['changedItem']['id']
+        return self.data['changedItem']['name']

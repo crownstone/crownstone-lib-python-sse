@@ -12,6 +12,7 @@ from aiohttp import (
 
 from crownstone_sse.util.eventbus import EventBus
 from crownstone_sse.const import (
+    EVENT_PING,
     EVENT_BASE_URL, LOGIN_URL,
     RECONNECTION_TIME,
     CONNECTION_TIMEOUT,
@@ -31,11 +32,10 @@ from crownstone_sse.const import (
     data_change_events,
     ability_change_events,
     operations,
-    TYPE, SUBTYPE, ID, ERROR, CODE, DATA, UTF8, PING,
+    TYPE, SUBTYPE, ID, ERROR, CODE, DATA, UTF8,
     RUNNING, NOT_RUNNING, STOPPING,
     LOGIN_FAILED, LOGIN_FAILED_EMAIL_NOT_VERIFIED
 )
-import crownstone_sse
 
 from crownstone_sse.events.system_event import SystemEvent
 from crownstone_sse.events.multi_switch_command_event import MultiSwitchCommandEvent
@@ -174,22 +174,25 @@ class CrownstoneSSE(Thread):
                         line = line_in_bytes.decode(UTF8)  # string
                         line = line.rstrip('\n').rstrip('\r')  # remove returns
 
-                        if line.startswith(PING):
-                            # connection alive received, update start time
-                            start_time = time.perf_counter()
-
                         if line.startswith(DATA):
                             line = line.lstrip(DATA)
                             data = json.loads(line)  # type dict
+                            
+                            # ping event received, keep connection alive.
+                            if data[TYPE] == EVENT_PING:
+                                start_time = time.perf_counter()
+
                             # check for access token expiration and login + restart client
                             # no need to fire event for this first
                             if data[TYPE] == EVENT_SYSTEM and data[SUBTYPE] == EVENT_SYSTEM_TOKEN_EXPIRED:
                                 await self.refresh_token()
+
                             # check for no connection between the sse server and the crownstone cloud
                             # log this issue
                             if data[TYPE] == EVENT_SYSTEM and data[SUBTYPE] == EVENT_SYSTEM_NO_CONNECTION:
                                 _LOGGER.warning("No connection to Crownstone cloud, waiting for server to come back "
                                                 "online")
+
                             # handle firing of events
                             self.fire_events(data)
 
@@ -216,7 +219,6 @@ class CrownstoneSSE(Thread):
 
         except ClientPayloadError:
             # Internet connection was lost, payload uncompleted. try to reconnect
-            # This exception only occurred on Windows.
             self.available = False
             await self.connect()
 
@@ -227,10 +229,9 @@ class CrownstoneSSE(Thread):
     def fire_events(self, data) -> None:
         """Fire event based on the data"""
         if data[TYPE] == EVENT_SYSTEM:
-            for system_event in system_events:
-                if data[SUBTYPE] == system_event:
-                    event = SystemEvent(data)
-                    self.event_bus.fire(system_event, event)
+            if data[SUBTYPE] in system_events:
+                event = SystemEvent(data)
+                self.event_bus.fire(data[SUBTYPE], event)
 
         if data[TYPE] == EVENT_COMMAND:
             if data[SUBTYPE] == EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES:
@@ -242,24 +243,20 @@ class CrownstoneSSE(Thread):
             self.event_bus.fire(EVENT_SWITCH_STATE_UPDATE, event)
 
         if data[TYPE] == EVENT_DATA_CHANGE:
-            for data_change_event in data_change_events:
-                if data[SUBTYPE] == data_change_event:
-                    for operation in operations:
-                        if data[OPERATION] == operation:
-                            event = DataChangeEvent(data, data_change_event, operation)
-                            self.event_bus.fire(data_change_event, event)
+            if data[SUBTYPE] in data_change_events:
+                if data[OPERATION] in operations:
+                    event = DataChangeEvent(data, data[SUBTYPE], data[OPERATION])
+                    self.event_bus.fire(data[SUBTYPE], event)
 
         if data[TYPE] == EVENT_PRESENCE:
-            for presence_event in presence_events:
-                if data[SUBTYPE] == presence_event:
-                    event = PresenceEvent(data, presence_event)
-                    self.event_bus.fire(presence_event, event)
+            if data[SUBTYPE] in presence_events:
+                event = PresenceEvent(data, data[SUBTYPE])
+                self.event_bus.fire(data[SUBTYPE], event)
 
         if data[TYPE] == EVENT_ABILITY_CHANGE:
-            for ability_change_event in ability_change_events:
-                if data[SUBTYPE] == ability_change_event:
-                    event = AbilityChangeEvent(data, ability_change_event)
-                    self.event_bus.fire(ability_change_event, event)
+            if data[SUBTYPE] in ability_change_events:
+                event = AbilityChangeEvent(data, data[SUBTYPE])
+                self.event_bus.fire(data[SUBTYPE], event)
 
     def add_event_listener(self, event_type, callback):
         self.event_bus.add_event_listener(event_type=event_type, event_listener=callback)
