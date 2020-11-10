@@ -58,12 +58,16 @@ _LOGGER = logging.getLogger(__name__)
 class CrownstoneSSE(Thread):
     """Client that manages IO with cloud and event server"""
 
-    def __init__(self, email: str, password: str) -> None:
+    def __init__(
+        self, email: str, 
+        password: str, 
+        external_loop: asyncio.AbstractEventLoop = None
+    ) -> None:
         """Init the SSE client"""
         self.loop = asyncio.new_event_loop()
         self.loop.set_exception_handler(sse_exception_handler)
         self.websession: ClientSession = ClientSession(loop=self.loop, read_timeout=None)
-        self.event_bus: EventBus = EventBus()
+        self.event_bus: EventBus = EventBus(external_loop)
         self.state = NOT_RUNNING
         self.available = False
         self.stop_event: Optional[asyncio.Event] = None

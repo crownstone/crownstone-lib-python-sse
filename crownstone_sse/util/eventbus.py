@@ -8,9 +8,10 @@ _LOGGER = logging.getLogger(__name__)
 class EventBus:
     """Event bus that listens and fires system or SSE events"""
 
-    def __init__(self) -> None:
+    def __init__(self, loop: asyncio.AbstractEventLoop = None) -> None:
         """Init the event bus"""
         self.event_listeners: Dict[str, List[Callable or Awaitable]] = {}
+        self.loop = loop
 
     def get_event_listeners(self) -> Dict[str, int]:
         """Return all current event listeners and amount of events"""
@@ -33,7 +34,7 @@ class EventBus:
             if asyncio.iscoroutinefunction(listener):
                 asyncio.run_coroutine_threadsafe(
                     listener(event),
-                    asyncio.get_running_loop()
+                    self.loop if self.loop is not None else asyncio.get_running_loop()
                 )
             else:
                 listener(event)
