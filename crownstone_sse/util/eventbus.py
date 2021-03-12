@@ -1,3 +1,4 @@
+"""Eventbus that can be used in either sync or async context."""
 import asyncio
 import logging
 from typing import Awaitable, Callable, Dict, List
@@ -6,42 +7,59 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class EventBus:
-    """Event bus that listens and fires system or SSE events"""
+    """Event bus that listens to - and fires SSE events."""
 
-    def __init__(self, loop: asyncio.AbstractEventLoop = None) -> None:
-        """Init the event bus"""
-        self.event_listeners: Dict[str, List[Callable or Awaitable]] = {}
-        self.loop = loop
+    def __init__(self) -> None:
+        """Initialize the event bus."""
+        self._event_listeners: Dict[str, List[Callable or Awaitable]] = {}
 
     def get_event_listeners(self) -> Dict[str, int]:
-        """Return all current event listeners and amount of events"""
+        """Return all current event listeners and amount of events."""
+        return {key: len(self._event_listeners[key]) for key in self._event_listeners}
 
-        return {key: len(self.event_listeners[key]) for key in self.event_listeners}
-
-    def add_event_listener(self, event_type: str, event_listener: Callable or Awaitable) -> Callable or Awaitable:
-        """Listen to events of a specific type"""
-        if event_type in self.event_listeners:
-            self.event_listeners[event_type].append(event_listener)
+    def add_event_listener(
+        self, event_type: str, callback: Callable or Awaitable
+    ) -> Callable or Awaitable:
+        """Listen to events of a specific type."""
+        if event_type in self._event_listeners:
+            self._event_listeners[event_type].append(callback)
         else:
-            self.event_listeners[event_type] = [event_listener]
+            self._event_listeners[event_type] = [callback]
 
-        # Return listener so it can be removed again, if necessary
-        return event_listener
+        # Return remove function so listener can be removed, if necessary
+        def remove_listener() -> None:
+            """Remove the listener."""
+            self._remove_event_listener(event_type, callback)
 
-    def fire(self, event_type: str, event=None) -> None:
-        """Fire an event. Can be listened for."""
-        for listener in self.event_listeners.get(event_type, []):
-            if asyncio.iscoroutinefunction(listener):
-                asyncio.run_coroutine_threadsafe(
-                    listener(event),
-                    self.loop if self.loop is not None else asyncio.get_running_loop()
-                )
-            else:
+        return remove_listener
+
+    def fire(self, event_type: str, event) -> None:
+        """Fire an event."""
+        for listener in self._event_listeners.get(event_type, []):
+            try:
+                loop = asyncio.get_running_loop()
+                # async context only, when an event loop is running
+                if asyncio.iscoroutine(listener):
+                    asyncio.create_task(listener)
+                elif asyncio.iscoroutinefunction(listener):
+                    asyncio.create_task(listener(event))
+                else:
+                    loop.run_in_executor(None, listener, event)
+
+            except RuntimeError:
+                # no running loop, just call the function normally
                 listener(event)
 
-    def remove_event_listener(self, event_type: str, listener: Callable or Awaitable) -> None:
-        """Remove a listener for an event type"""
+    def _remove_event_listener(
+        self, event_type: str, listener: Callable or Awaitable
+    ) -> None:
+        """Remove a listener for an event type."""
         try:
-            self.event_listeners[event_type].remove(listener)
-        except ValueError:
-            _LOGGER.warning("Error removing listener, it does not exist.")
+            self._event_listeners[event_type].remove(listener)
+
+            # delete event type if list empty
+            if not self._event_listeners[event_type]:
+                self._event_listeners.pop(event_type)
+
+        except (KeyError, ValueError):
+            _LOGGER.warning("Error removing unknown listener.")

@@ -2,14 +2,13 @@
 Asynchronous Python library that listens to Crownstone SSE events.
 
 ## Functionality
-* Async: using asyncio and aiohttp, optimized for speed.
-* Easy to use: simply pass your crownstone email and password to the constructor, and start the client!
+* Async: using asyncio and aiohttp, easy to integrate in existing projects.
+* Multi-functional: Library provides an extra thread wrapper to run the client in sync context.
 * Complete: Fully integrated event bus that can be used to listen to events, and run callbacks.
-* Independent: Client runs in a separate thread, your main thread will not be blocked!
 
 ## Requirements
-* Python 3.7 or higher
-* Aiohttp 3.6.2
+* Python 3.9
+* Aiohttp 3.7.4
 
 ## Standard installation
 cd to the project folder and run:
@@ -33,28 +32,111 @@ $ python setup.py install
 ```
 
 ## Getting started
-### Example
+
+### Asynchronous example
+
 ```python
-from crownstone_sse.client import CrownstoneSSE
-from crownstone_sse.events.switch_state_update_event import SwitchStateUpdateEvent
-from crownstone_sse.events.system_event import SystemEvent
-from crownstone_sse.events.presence_event import PresenceEvent
-from crownstone_sse.events.ability_change_event import AbilityChangeEvent
-from crownstone_sse.events.data_change_event import DataChangeEvent
+import asyncio
+import logging
+from crownstone_sse import CrownstoneSSEAsync
+
+# enable logging
+logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
+
+
+async def main():
+    # Create a new instance of Crownstone SSE client.
+    # parameters:
+    # email (string): your Crownstone account email.
+    # password (string): your Crownstone account password.
+    # access_token (string) [optional]: Access token from a previous login to skip the login step.
+    # websession (aiohttp.ClientSession): provide the websession used in a project this is integrated in.
+    # reconnection_time (int): time to wait before reconnection on connection loss.
+    client = CrownstoneSSEAsync(
+        email="example@example.com",
+        password="CrownstoneRocks"
+    )
+    # wait for the client to finish (means: blocking, run forever).
+    await process_events(client)
+    # to use this concurrently in an asyncio project, run this instead:
+    # asyncio.create_task(process_events(client))
+
+
+async def process_events(sse_client: CrownstoneSSEAsync):
+    async with sse_client as client:
+        async for event in client:
+            # prints string representation of the event.
+            print(event)
+
+            # optionally you can use the provided eventbus.
+            # event_bus.fire(event.sub_type, event)
+
+            # or access specific event details.
+            # for example a switch state update:
+            # print(event.switch_state)
+
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    pass
+finally:
+    print("Crownstone SSE client finished. Thanks for your time!")
+```
+The async client is meant to be used in an existing asyncio project. You can pass an existing `aiohttp.ClientSession` 
+object to the client, and schedule the receiving of events in the running event loop by using:
+```python
+asyncio.create_task()
+```
+as shown in the example above.
+
+### Using an event bus
+
+Crownstone SSE library provides a very complete event bus that can be used to schedule coroutines as well as callbacks.
+Make sure to initiate the event bus within the event loop.
+The eventbus can be initiated like so:
+```python
+from crownstone_sse import EventBus
+
+bus = EventBus()
+```
+Then you can create a coroutine to be executed upon receiving a specific event:
+```python
+async def async_update_local_switch_state(event: SwitchStateUpdateEvent):
+    # example
+    await crownstone.update_state(event.switch_state)
+
+bus.add_event_listener(EVENT_CROWNSTONE_SWITCH_STATE_UPDATE, async_update_local_switch_state)
+```
+The usage of the eventbus is optional here. You can also use an existing eventbus in your project.
+
+### Synchronous example
+
+```python
+import logging
+from crownstone_sse import CrownstoneSSE
+from crownstone_sse.events import (
+    SwitchStateUpdateEvent,
+    SystemEvent,
+    PresenceEvent,
+    AbilityChangeEvent,
+    DataChangeEvent
+)
 from crownstone_sse.const import (
-    EVENT_SYSTEM_STREAM_START,
-    EVENT_SWITCH_STATE_UPDATE,
-    EVENT_PRESENCE_ENTER_LOCATION,
-    EVENT_ABILITY_CHANGE_DIMMING,
-    EVENT_DATA_CHANGE_CROWNSTONE,
     OPERATION_CREATE,
     OPERATION_DELETE,
     OPERATION_UPDATE
 )
-import logging
-import time
+from crownstone_sse import (
+    EVENT_SYSTEM_STREAM_START,
+    EVENT_CROWNSTONE_SWITCH_STATE_UPDATE,
+    EVENT_PRESENCE_ENTER_LOCATION,
+    EVENT_ABILITY_CHANGE_DIMMING,
+    EVENT_DATA_CHANGE_CROWNSTONE
+)
 
-# enable logging
+
+# Enable logging.
 logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
 
 
@@ -83,30 +165,43 @@ def notify_data_changed(event: DataChangeEvent):
         print("Data {} has been deleted".format(event.changed_item_name))
 
 
-# Create a sse client instance. Pass your crownstone account information.
-# email and password are required for logging in again when an access token has expired.
-sse_client = CrownstoneSSE('email', 'password')
-# for usage with existing access token you can use this function:
-# sse_client.set_access_token('myAccessToken')
-
-# Start running the client
-sse_client.start()
+# Create a new instance of Crownstone SSE client.
+# email (string): your Crownstone account email.
+# password (string): your Crownstone account password.
+# access_token (string) [optional]: Access token from a previous login to skip the login step.
+# reconnection_time (int): time to wait before reconnection on connection loss.
+sse_client = CrownstoneSSE(
+    email="example@example.com",
+    password="CrownstoneRocks"
+)
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
-sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, switch_update)
+sse_client.add_event_listener(EVENT_CROWNSTONE_SWITCH_STATE_UPDATE, switch_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
 sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
 sse_client.add_event_listener(EVENT_DATA_CHANGE_CROWNSTONE, notify_data_changed)
 
-# block for 120 seconds (let the client run for 120 second before stopping)
-time.sleep(120)
-# stop the client
-sse_client.stop()
+# Wait until the thread finishes.
+# You can terminate the thread by using SIGINT (ctrl + c or stop button in IDE).
+try:
+    sse_client.join()
+except KeyboardInterrupt:
+    sse_client.stop()
 ```
+This library can be used in synchronous context, and the example above will likely be the go-to option for most users.
+You can use the Thread next to other synchronous Python code. <br>
+If you want to let the client run forever, you can use:
+```python
+sse_client.join()
+```
+As shown above. This will make the main thread wait till the sse_client thread is finished.
+You should however always build in  a way to stop the client, you can do so by stopping on `KeyboardInterrupt` 
+as shown above.
+
 ### Creating callbacks
+
 Callbacks are functions that will be executed everytime an event comes in of an specific event type.<br>
-Callback functions are standard functions, NOT coroutines!<br>
 The standard format for a callback is:
 ```python
 def callback(event: EventTypeClass):
@@ -119,8 +214,17 @@ def callback(event: PresenceEvent):
     print(event.user_id)
     print(event.location_id)
 ```
+You can add the listener like so:
+```python
+unsub = sse_client.add_event_listener(event_type, callback)
+```
+This returns an unsubscribe function in case you want to remove the listener again. To do that, simply call:
+```python
+unsub()
+```
 
 ## Event types
+
 Currently, there are 6 different event types:
 * System event
 * Command event
@@ -128,14 +232,24 @@ Currently, there are 6 different event types:
 * Presence event
 * Switch state update event
 * Ability change event
+* Ping event
 
 ### System event
+
 A system event is represented as:
+#### Type
+* type
+* sub_type
+#### System  
 * code
 * message
 
 ### Switch command event
+
 A switch command event is represented as:
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Crownstone
@@ -144,7 +258,11 @@ A switch command event is represented as:
 * switch_val (as SwitchCommandValue)
 
 ### Multi Switch command event
+
 A multi switch command event is represented as:
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Crownstone list
@@ -155,8 +273,12 @@ A multi switch command event is represented as:
 * switch_val (as SwitchCommandValue)
 
 ### Data change event
+
 A data change event is represented as:
 * operation (update | delete | create)
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Item
@@ -164,7 +286,11 @@ A data change event is represented as:
 * changed_item_name
 
 ### Presence event
+
 A presence event is represented as:
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Location
@@ -173,7 +299,11 @@ A presence event is represented as:
 * user_id
 
 ### Switch state update event
+
 A switch state update event is represented as:
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Crownstone
@@ -182,7 +312,11 @@ A switch state update event is represented as:
 * switch_state (percentage)
 
 ### Ability change event
+
 An ability change event is represented as:
+#### Type
+* type
+* sub_type
 #### Sphere
 * sphere_id
 #### Crownstone
@@ -193,26 +327,24 @@ An ability change event is represented as:
 * ability_enabled
 * ability_synced_to_crownstone
 
+### Ping event
+
+A ping event is represented as:
+#### Type
+* type
+#### Counter
+* counter
+* elapsed_time (in seconds)
+
+The ping event exists to notify the client that the connection is still alive, internally. <br> 
+You can however use it to check how long the connection has been alive as well.
+
 ## Testing
-To run the tests using tox install tox first by running:
-```console
-$ pip install tox
-```
-To execute the tests cd to the project folder and run:
-```console
-$ tox
-```
-To see which parts of the code are covered by the tests, a coverage report is generated after the tests have been successfull.<br>
-To see the coverage report run:
-```console
-$ coverage report
-```
-If you like to get a better overview of the test you can generate a HTML file like so:
-```console
-$ coverage html
-```
-To view your html file directly on Linux:
-```console
-$ ./htmlcov/index.html
-```
-On Windows simply navigate to the htmlcov folder inside the project folder, and double-click index.html. It will be executed in your selected browser.
+
+Tests are not available yet for this version. The client has however been live tested on the following:
+1. Logging in with Crownstone credentials.
+2. Establishing a connection to the Crownstone SSE server.
+3. Tested the connection staying alive for longer than 10 minutes (no total timeout).
+4. Tested client reconnection by manually disabling internet, waiting over 35 seconds, and turning it back on.
+5. Tested access token renewal by providing a short TTL on the access token when logging in.
+6. Safely closing the connection and exiting the loop after a manual stop is called, both and running and reconnecting state.

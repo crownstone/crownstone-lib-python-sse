@@ -1,24 +1,27 @@
-"""Constants for the Crownstone Cloud lib"""
+"""Constants used by Crownstone SSE components."""
 
 # URLs
 EVENT_BASE_URL = "https://events.crownstone.rocks/sse?accessToken="
 LOGIN_URL = "https://cloud.crownstone.rocks/api/users/login"
 
-# SSE client
-EVENT_CLIENT_STOP = "client_stop"
+# Headers
+CONTENT_TYPE = "text/event-stream"
+NO_CACHE = "no-cache"
+
+# Connection parameters
 RECONNECTION_TIME = 30
-CONNECTION_TIMEOUT = 40
+CONNECTION_TIMEOUT = 35
 
 # SSE Ping event
 EVENT_PING = "ping"
 
 # SSE System events
 EVENT_SYSTEM = "system"
-EVENT_SYSTEM_TOKEN_EXPIRED = 'TOKEN_EXPIRED'
+EVENT_SYSTEM_TOKEN_EXPIRED = "TOKEN_EXPIRED"
 EVENT_SYSTEM_NO_ACCESS_TOKEN = "NO_ACCESS_TOKEN"
 EVENT_SYSTEM_NO_CONNECTION = "NO_CONNECTION"
 EVENT_SYSTEM_STREAM_START = "STREAM_START"
-EVENT_SYSTEM_STREAM_CLOSE = "STREAM_CLOSE"
+EVENT_SYSTEM_STREAM_CLOSED = "STREAM_CLOSED"
 
 # SSE dataChange events
 EVENT_DATA_CHANGE = "dataChange"
@@ -35,6 +38,7 @@ OPERATION_UPDATE = "update"
 
 # SwitchState update events
 EVENT_SWITCH_STATE_UPDATE = "switchStateUpdate"
+EVENT_CROWNSTONE_SWITCH_STATE_UPDATE = "stone"
 
 # SSE command events
 EVENT_COMMAND = "command"
@@ -53,25 +57,9 @@ EVENT_ABILITY_CHANGE_DIMMING = "dimming"
 EVENT_ABILITY_CHANGE_SWITCHCRAFT = "switchcraft"
 EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE = "tapToToggle"
 
-# syntax
-TYPE = "type"
-SUBTYPE = "subType"
-ID = "id"
-ERROR = "error"
-CODE = "code"
-UTF8 = "utf-8"
-
-# SSE data prefix
-DATA = "data:"
-
 # errors
 LOGIN_FAILED = "LOGIN_FAILED"
 LOGIN_FAILED_EMAIL_NOT_VERIFIED = "LOGIN_FAILED_EMAIL_NOT_VERIFIED"
-
-# SSE states
-RUNNING = "running"
-NOT_RUNNING = "not_running"
-STOPPING = "stopping"
 
 # lists for iteration
 system_events = [
@@ -79,14 +67,14 @@ system_events = [
     EVENT_SYSTEM_NO_ACCESS_TOKEN,
     EVENT_SYSTEM_NO_CONNECTION,
     EVENT_SYSTEM_STREAM_START,
-    EVENT_SYSTEM_STREAM_CLOSE
+    EVENT_SYSTEM_STREAM_CLOSED,
 ]
 
 presence_events = [
     EVENT_PRESENCE_ENTER_SPHERE,
     EVENT_PRESENCE_EXIT_SPHERE,
     EVENT_PRESENCE_ENTER_LOCATION,
-    EVENT_PRESENCE_EXIT_LOCATION
+    EVENT_PRESENCE_EXIT_LOCATION,
 ]
 
 data_change_events = [
@@ -99,16 +87,5 @@ data_change_events = [
 ability_change_events = [
     EVENT_ABILITY_CHANGE_DIMMING,
     EVENT_ABILITY_CHANGE_SWITCHCRAFT,
-    EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE
+    EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE,
 ]
-
-command_events = [
-    EVENT_COMMAND_SWITCH_MULTIPLE_CROWNSTONES
-]
-
-operations = [
-    OPERATION_UPDATE,
-    OPERATION_CREATE,
-    OPERATION_DELETE
-]
-

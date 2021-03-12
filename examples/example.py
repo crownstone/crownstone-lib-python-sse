@@ -1,29 +1,33 @@
 """
-Example receiving Crownstone SSE events and creating callbacks for the received data.
+Sync example of receiving Crownstone SSE events.
 
 Created by Ricardo Steijn.
-Last update on 9-11-2020
+Last update on 03-11-2021.
 """
-from crownstone_sse.client import CrownstoneSSE
-from crownstone_sse.events.switch_state_update_event import SwitchStateUpdateEvent
-from crownstone_sse.events.system_event import SystemEvent
-from crownstone_sse.events.presence_event import PresenceEvent
-from crownstone_sse.events.ability_change_event import AbilityChangeEvent
-from crownstone_sse.events.data_change_event import DataChangeEvent
+import logging
+from crownstone_sse import CrownstoneSSE
+from crownstone_sse.events import (
+    SwitchStateUpdateEvent,
+    SystemEvent,
+    PresenceEvent,
+    AbilityChangeEvent,
+    DataChangeEvent
+)
 from crownstone_sse.const import (
-    EVENT_SYSTEM_STREAM_START,
-    EVENT_SWITCH_STATE_UPDATE,
-    EVENT_PRESENCE_ENTER_LOCATION,
-    EVENT_ABILITY_CHANGE_DIMMING,
-    EVENT_DATA_CHANGE_CROWNSTONE,
     OPERATION_CREATE,
     OPERATION_DELETE,
     OPERATION_UPDATE
 )
-import logging
-import time
+from crownstone_sse import (
+    EVENT_SYSTEM_STREAM_START,
+    EVENT_CROWNSTONE_SWITCH_STATE_UPDATE,
+    EVENT_PRESENCE_ENTER_LOCATION,
+    EVENT_ABILITY_CHANGE_DIMMING,
+    EVENT_DATA_CHANGE_CROWNSTONE
+)
 
-# enable logging
+
+# enable logging.
 logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
 
 
@@ -52,23 +56,26 @@ def notify_data_changed(event: DataChangeEvent):
         print("Data {} has been deleted".format(event.changed_item_name))
 
 
-# Create a sse client instance. Pass your crownstone account information.
-# email and password are required for logging in again when an access token has expired.
-sse_client = CrownstoneSSE('email', 'password')
-# for usage with existing access token you can use this function:
-# sse_client.set_access_token('myAccessToken')
-
-# Start running the client
-sse_client.start()
+# Create a new instance of Crownstone SSE client.
+# email (string): your Crownstone account email.
+# password (string): your Crownstone account password.
+# access_token (string) [optional]: Access token from a previous login to skip the login step.
+# reconnection_time (int): time to wait before reconnection on connection loss.
+sse_client = CrownstoneSSE(
+    email="example@example.com",
+    password="CrownstoneRocks"
+)
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.
 sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
-sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, switch_update)
+sse_client.add_event_listener(EVENT_CROWNSTONE_SWITCH_STATE_UPDATE, switch_update)
 sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
 sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
 sse_client.add_event_listener(EVENT_DATA_CHANGE_CROWNSTONE, notify_data_changed)
 
-# block for 120 seconds (let the client run for 120 second before stopping)
-time.sleep(120)
-# stop the client
-sse_client.stop()
+# Wait until the thread finishes.
+# You can terminate the thread by using SIGINT (ctrl + c or stop button in IDE).
+try:
+    sse_client.join()
+except KeyboardInterrupt:
+    sse_client.stop()
