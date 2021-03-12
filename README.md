@@ -225,7 +225,7 @@ unsub()
 
 ## Event types
 
-Currently, there are 6 different event types:
+Currently, there are 7 different event types:
 * System event
 * Command event
 * Data change event
