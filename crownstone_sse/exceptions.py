@@ -15,7 +15,11 @@ class AuthError(Enum):
     TOKEN_EXPIRED = "TOKEN_EXPIRED"
 
 
-class CrownstoneSseException(Exception):
+class ClientError(Enum):
+    CLOSE_RECEIVED = "CLOSE_RECEIVED"
+
+
+class CrownstoneClientException(Exception):
     type = None
     message = None
 
@@ -24,7 +28,16 @@ class CrownstoneSseException(Exception):
         self.message = message
 
 
-class CrownstoneConnectionTimeout(Exception):
+class CrownstoneAuthException(Exception):
+    type = None
+    message = None
+
+    def __init__(self, type, message=None):
+        self.type = type
+        self.message = message
+
+
+class CrownstoneConnectionException(Exception):
     type = None
     message = None
 
