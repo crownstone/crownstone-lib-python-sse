@@ -7,12 +7,12 @@ This can be used in synchronous context.
 import asyncio
 import logging
 import threading
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 from crownstone_sse.async_client import CrownstoneSSEAsync
 from crownstone_sse.const import RECONNECTION_TIME
-from crownstone_sse.util.eventbus import EventBus
 from crownstone_sse.events import PingEvent
+from crownstone_sse.util.eventbus import EventBus
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,9 +21,11 @@ class CrownstoneSSE(threading.Thread):
     """Crownstone threaded event client."""
 
     def __init__(
-            self, email: str, password: str,
-            access_token: Optional[str] = None,
-            reconnection_time: int = RECONNECTION_TIME
+        self,
+        email: str,
+        password: str,
+        access_token: Optional[str] = None,
+        reconnection_time: int = RECONNECTION_TIME,
     ) -> None:
         """
         Initialize event client.
@@ -56,17 +58,13 @@ class CrownstoneSSE(threading.Thread):
             email=self._email,
             password=self._password,
             access_token=self._access_token,
-            reconnection_time=self._reconnection_time
+            reconnection_time=self._reconnection_time,
         )
 
         async with self._client as sse_client:
             async for event in sse_client:
                 if event is not None:
-                    # ping event has no sub type, use type instead
-                    if type(event) == PingEvent:
-                        self._bus.fire(event.type, event)
-                    else:
-                        self._bus.fire(event.sub_type, event)
+                    self._bus.fire(event.type, event)
 
     def add_event_listener(self, event_type, callback) -> Callable:
         """Add a new listener, return function to remove the listener."""

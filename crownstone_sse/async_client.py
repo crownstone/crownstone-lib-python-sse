@@ -4,43 +4,39 @@ and returns received events in data containers.
 
 This class must be used in the event loop.
 """
-import json
+from __future__ import annotations
+
 import asyncio
-import aiohttp
 import hashlib
+import json
 import logging
 from enum import Enum, auto
 from typing import Optional
 
+import aiohttp
+
 from crownstone_sse.const import (
-    RECONNECTION_TIME,
-    LOGIN_URL,
+    CONNECTION_TIMEOUT,
+    CONTENT_TYPE,
+    EVENT_BASE_URL,
+    EVENT_SYSTEM_NO_CONNECTION,
+    EVENT_SYSTEM_TOKEN_EXPIRED,
     LOGIN_FAILED,
     LOGIN_FAILED_EMAIL_NOT_VERIFIED,
-    EVENT_BASE_URL,
-    CONTENT_TYPE,
+    LOGIN_URL,
     NO_CACHE,
-    CONNECTION_TIMEOUT,
-    EVENT_SYSTEM_TOKEN_EXPIRED,
-    EVENT_SYSTEM_NO_CONNECTION
+    RECONNECTION_TIME,
 )
-from crownstone_sse.helpers.aiohttp_client import (
-    create_client_session
-)
+from crownstone_sse.events import Event, SystemEvent, parse_event
 from crownstone_sse.exceptions import (
     AuthError,
     ClientError,
     ConnectError,
     CrownstoneAuthException,
     CrownstoneClientException,
-    CrownstoneConnectionException
+    CrownstoneConnectionException,
 )
-from crownstone_sse.events import (
-    Event,
-    parse_event,
-    SystemEvent
-)
-from __future__ import annotations
+from crownstone_sse.helpers.aiohttp_client import create_client_session
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,13 +53,15 @@ class CrownstoneSSEAsync:
     """Crownstone event client async iterator."""
 
     def __init__(
-            self, email: str, password: str,
-            access_token: Optional[str] = None,
-            websession: Optional[aiohttp.ClientSession] = None,
-            reconnection_time: int = RECONNECTION_TIME
+        self,
+        email: str,
+        password: str,
+        access_token: Optional[str] = None,
+        websession: Optional[aiohttp.ClientSession] = None,
+        reconnection_time: int = RECONNECTION_TIME,
     ) -> None:
         """Initialize event client.
-        
+
         :param email: Crownstone account email address.
             Used for login and automatic access token renewal.
         :param password: Crownstone account password.
@@ -130,7 +128,7 @@ class CrownstoneSSEAsync:
                 async for line in self._client_response.content:
                     # convert to string and remove returns/delimiters
                     line_str: str = line.decode("utf-8")
-                    line_str = line_str.rstrip('\n').rstrip('\r')
+                    line_str = line_str.rstrip("\n").rstrip("\r")
 
                     # only look at the data lines, ignore everything else
                     if line_str.startswith("data:"):
@@ -139,7 +137,7 @@ class CrownstoneSSEAsync:
 
                         event = parse_event(data)
                         # handle important system events
-                        if type(event) == SystemEvent:
+                        if isinstance(event, SystemEvent):
                             if event.sub_type == EVENT_SYSTEM_TOKEN_EXPIRED:
                                 raise CrownstoneAuthException(AuthError.TOKEN_EXPIRED)
                             if event.sub_type == EVENT_SYSTEM_NO_CONNECTION:
@@ -158,7 +156,7 @@ class CrownstoneSSEAsync:
                 await self._async_reconnect()
 
             except CrownstoneAuthException as auth_err:
-                 # handle re-auth and reconnection
+                # handle re-auth and reconnection
                 if auth_err.type == AuthError.TOKEN_EXPIRED:
                     await self._async_login()
                     await self._async_connect()
@@ -180,10 +178,7 @@ class CrownstoneSSEAsync:
         hashed_password = sha_hash.hexdigest()
 
         # Create JSON object with login credentials
-        data = {
-            "email": self._email,
-            "password": hashed_password
-        }
+        data = {"email": self._email, "password": hashed_password}
 
         try:
             # login
@@ -198,22 +193,30 @@ class CrownstoneSSEAsync:
                 if "error" in data:
                     error = data["error"]
                     if error["code"] == LOGIN_FAILED:
-                        raise CrownstoneAuthException(AuthError.AUTHENTICATION_ERROR, "Wrong email/password")
+                        raise CrownstoneAuthException(
+                            AuthError.AUTHENTICATION_ERROR, "Wrong email/password"
+                        )
                     elif error["code"] == LOGIN_FAILED_EMAIL_NOT_VERIFIED:
-                        raise CrownstoneAuthException(AuthError.EMAIL_NOT_VERIFIED, "Email not verified")
+                        raise CrownstoneAuthException(
+                            AuthError.EMAIL_NOT_VERIFIED, "Email not verified"
+                        )
             # unknown error
             else:
-                raise CrownstoneAuthException(AuthError.UNKNOWN_ERROR, "Unknown error occurred")
+                raise CrownstoneAuthException(
+                    AuthError.UNKNOWN_ERROR, "Unknown error occurred"
+                )
 
         except aiohttp.ClientConnectionError:
-            raise CrownstoneConnectionException(ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection")
+            raise CrownstoneConnectionException(
+                ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection"
+            )
 
     async def _async_connect(self) -> None:
         """Open a connection to the HTTP server."""
         # Headers for this request
         # According to SSE specification
         kwargs = {
-            'headers': {
+            "headers": {
                 aiohttp.hdrs.CONTENT_TYPE: CONTENT_TYPE,
                 aiohttp.hdrs.ACCEPT: CONTENT_TYPE,
                 aiohttp.hdrs.CACHE_CONTROL: NO_CACHE,
@@ -227,9 +230,9 @@ class CrownstoneSSEAsync:
 
         try:
             response = await self.websession.get(
-                url=f'{EVENT_BASE_URL}{self._access_token}',
+                url=f"{EVENT_BASE_URL}{self._access_token}",
                 timeout=sse_timeout,
-                **kwargs
+                **kwargs,
             )
             # Raises ClientResponseError
             response.raise_for_status()
@@ -248,8 +251,10 @@ class CrownstoneSSEAsync:
         # lost connection to the SSE server, try to reconnect
         # log once
         if self._state != AsyncClientState.CONNECTING:
-            _LOGGER.debug("Lost connection to the Crownstone SSE server. "
-                          "Reconnecting in 30 seconds.")
+            _LOGGER.debug(
+                "Lost connection to the Crownstone SSE server. "
+                "Reconnecting in 30 seconds."
+            )
 
         self._state = AsyncClientState.CONNECTING
         self._sleep_task = asyncio.create_task(asyncio.sleep(self._reconnection_time))
@@ -275,5 +280,7 @@ class CrownstoneSSEAsync:
         # Set an exception in StreamReader to stop the iteration
         if self._client_response is not None:
             self._client_response.content.set_exception(
-                CrownstoneClientException(ClientError.CLOSE_RECEIVED, "Connection close received")
+                CrownstoneClientException(
+                    ClientError.CLOSE_RECEIVED, "Connection close received"
+                )
             )

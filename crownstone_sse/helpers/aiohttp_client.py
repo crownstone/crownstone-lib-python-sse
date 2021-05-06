@@ -1,5 +1,6 @@
 """Functions to get or create an aiohttp ClientSession."""
 import ssl
+
 import aiohttp
 import certifi
 

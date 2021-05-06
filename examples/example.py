@@ -2,7 +2,7 @@
 Sync example of receiving Crownstone SSE events.
 
 Created by Ricardo Steijn.
-Last update on 03-11-2021.
+Last update on 06-05-2021.
 """
 import logging
 from crownstone_sse import CrownstoneSSE
@@ -11,28 +11,28 @@ from crownstone_sse.events import (
     SystemEvent,
     PresenceEvent,
     AbilityChangeEvent,
-    DataChangeEvent
-)
-from crownstone_sse.const import (
-    OPERATION_CREATE,
-    OPERATION_DELETE,
-    OPERATION_UPDATE
+    DataChangeEvent,
 )
 from crownstone_sse import (
-    EVENT_SYSTEM_STREAM_START,
-    EVENT_CROWNSTONE_SWITCH_STATE_UPDATE,
+    EVENT_ABILITY_CHANGE,
+    EVENT_DATA_CHANGE,
+    EVENT_PRESENCE,
     EVENT_PRESENCE_ENTER_LOCATION,
-    EVENT_ABILITY_CHANGE_DIMMING,
-    EVENT_DATA_CHANGE_CROWNSTONE
+    EVENT_SWITCH_STATE_UPDATE,
+    EVENT_SWITCH_STATE_UPDATE_CROWNSTONE,
+    EVENT_SYSTEM,
+    OPERATION_CREATE,
+    OPERATION_DELETE,
+    OPERATION_UPDATE,
 )
-
 
 # enable logging.
 logging.basicConfig(format='%(levelname)s :%(message)s', level=logging.DEBUG)
 
 
 def switch_update(event: SwitchStateUpdateEvent):
-    print("Crownstone {} switch state changed to {}".format(event.cloud_id, event.switch_state))
+    if event.sub_type == EVENT_SWITCH_STATE_UPDATE_CROWNSTONE:
+        print("Crownstone {} switch state changed to {}".format(event.cloud_id, event.switch_state))
 
 
 def notify_stream_start(event: SystemEvent):
@@ -40,7 +40,8 @@ def notify_stream_start(event: SystemEvent):
 
 
 def notify_presence_changed(event: PresenceEvent):
-    print("User {} has entered location {}".format(event.user_id, event.location_id))
+    if event.sub_type == EVENT_PRESENCE_ENTER_LOCATION:
+        print("User {} has entered location {}".format(event.user_id, event.location_id))
 
 
 def notify_ability_changed(event: AbilityChangeEvent):
@@ -67,11 +68,11 @@ sse_client = CrownstoneSSE(
 )
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.
-sse_client.add_event_listener(EVENT_SYSTEM_STREAM_START, notify_stream_start)
-sse_client.add_event_listener(EVENT_CROWNSTONE_SWITCH_STATE_UPDATE, switch_update)
-sse_client.add_event_listener(EVENT_PRESENCE_ENTER_LOCATION, notify_presence_changed)
-sse_client.add_event_listener(EVENT_ABILITY_CHANGE_DIMMING, notify_ability_changed)
-sse_client.add_event_listener(EVENT_DATA_CHANGE_CROWNSTONE, notify_data_changed)
+sse_client.add_event_listener(EVENT_SYSTEM, notify_stream_start)
+sse_client.add_event_listener(EVENT_SWITCH_STATE_UPDATE, switch_update)
+sse_client.add_event_listener(EVENT_PRESENCE, notify_presence_changed)
+sse_client.add_event_listener(EVENT_ABILITY_CHANGE, notify_ability_changed)
+sse_client.add_event_listener(EVENT_DATA_CHANGE, notify_data_changed)
 
 # Wait until the thread finishes.
 # You can terminate the thread by using SIGINT (ctrl + c or stop button in IDE).

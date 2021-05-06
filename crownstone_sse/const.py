@@ -38,7 +38,7 @@ OPERATION_UPDATE = "update"
 
 # SwitchState update events
 EVENT_SWITCH_STATE_UPDATE = "switchStateUpdate"
-EVENT_CROWNSTONE_SWITCH_STATE_UPDATE = "stone"
+EVENT_SWITCH_STATE_UPDATE_CROWNSTONE = "stone"
 
 # SSE command events
 EVENT_COMMAND = "command"

@@ -6,16 +6,17 @@ for full details on the events.
 """
 import json
 from typing import TypeVar
-from crownstone_sse.helpers.switch_command import SwitchCommand
+
 from crownstone_sse.const import (
-    EVENT_PING,
-    EVENT_SYSTEM,
+    EVENT_ABILITY_CHANGE,
     EVENT_COMMAND,
     EVENT_DATA_CHANGE,
-    EVENT_ABILITY_CHANGE,
+    EVENT_PING,
     EVENT_PRESENCE,
     EVENT_SWITCH_STATE_UPDATE,
+    EVENT_SYSTEM,
 )
+from crownstone_sse.helpers.switch_command import SwitchCommand
 
 
 class AbilityChangeEvent:
@@ -293,7 +294,7 @@ Event = TypeVar(
     SystemEvent,
     SwitchStateUpdateEvent,
     PresenceEvent,
-    PingEvent
+    PingEvent,
 )
 
 
