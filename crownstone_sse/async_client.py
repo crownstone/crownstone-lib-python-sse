@@ -251,7 +251,7 @@ class CrownstoneSSEAsync:
         # lost connection to the SSE server, try to reconnect
         # log once
         if self._state != AsyncClientState.CONNECTING:
-            _LOGGER.debug(
+            _LOGGER.warning(
                 "Lost connection to the Crownstone SSE server. "
                 "Reconnecting in 30 seconds."
             )
