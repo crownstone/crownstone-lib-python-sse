@@ -1,4 +1,6 @@
 """Exceptions for Crownstone SSE client."""
+from __future__ import annotations
+
 from enum import Enum
 
 
@@ -28,28 +30,28 @@ class ClientError(Enum):
 class CrownstoneClientException(Exception):
     """Client exception for Crownstone SSE."""
 
-    def __init__(self, type, message=None):
+    def __init__(self, exc_type: ClientError, message: str | None = None):
         """Initialize exception."""
-        super().__init__()
-        self.type = type
+        super().__init__(exc_type, message)
+        self.type = exc_type
         self.message = message
 
 
 class CrownstoneAuthException(Exception):
     """Authentication exception for Crownstone SSE."""
 
-    def __init__(self, type, message=None):
+    def __init__(self, exc_type: AuthError, message: str | None = None):
         """Initialize exception."""
-        super().__init__()
-        self.type = type
+        super().__init__(exc_type, message)
+        self.type = exc_type
         self.message = message
 
 
 class CrownstoneConnectionException(Exception):
     """Connection exception for Crownstone SSE."""
 
-    def __init__(self, type, message=None):
+    def __init__(self, exc_type: ConnectError, message: str | None = None):
         """Initialize exception."""
-        super().__init__()
-        self.type = type
+        super().__init__(exc_type, message)
+        self.type = exc_type
         self.message = message

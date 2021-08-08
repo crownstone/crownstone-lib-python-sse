@@ -4,27 +4,27 @@ Events are fired in an event bus.
 
 This can be used in synchronous context.
 """
+from __future__ import annotations
+
 import asyncio
-import logging
 import threading
-from typing import Callable, Optional
+from typing import Any, Awaitable, Callable
 
 from crownstone_sse.async_client import CrownstoneSSEAsync
 from crownstone_sse.const import RECONNECTION_TIME
-from crownstone_sse.events import PingEvent
 from crownstone_sse.util.eventbus import EventBus
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class CrownstoneSSE(threading.Thread):
     """Crownstone threaded event client."""
 
+    _client: CrownstoneSSEAsync
+
     def __init__(
         self,
         email: str,
         password: str,
-        access_token: Optional[str] = None,
+        access_token: str | None = None,
         reconnection_time: int = RECONNECTION_TIME,
     ) -> None:
         """
@@ -38,7 +38,6 @@ class CrownstoneSSE(threading.Thread):
             to the Crownstone cloud. Can be provided to skip an extra login, for faster setup.
         :param reconnection_time: Time between reconnection in case of connection failure.
         """
-        self._client: Optional[CrownstoneSSEAsync] = None
         self._email = email
         self._password = password
         self._access_token = access_token
@@ -66,7 +65,9 @@ class CrownstoneSSE(threading.Thread):
                 if event is not None:
                     self._bus.fire(event.type, event)
 
-    def add_event_listener(self, event_type, callback) -> Callable:
+    def add_event_listener(
+        self, event_type: str, callback: Callable[..., Any] | Awaitable[Any]
+    ) -> Callable[..., Any]:
         """Add a new listener, return function to remove the listener."""
         return self._bus.add_event_listener(event_type, callback)
 

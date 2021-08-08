@@ -1,7 +1,11 @@
 """Eventbus that can be used in either sync or async context."""
+from __future__ import annotations
+
 import asyncio
 import logging
-from typing import Awaitable, Callable, Dict, List
+from typing import Any, Awaitable, Callable
+
+from crownstone_sse.events import Event
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,15 +15,15 @@ class EventBus:
 
     def __init__(self) -> None:
         """Initialize the event bus."""
-        self._event_listeners: Dict[str, List[Callable or Awaitable]] = {}
+        self._event_listeners: dict[str, list[Any]] = {}
 
-    def get_event_listeners(self) -> Dict[str, int]:
+    def get_event_listeners(self) -> dict[str, int]:
         """Return all current event listeners and amount of events."""
         return {key: len(self._event_listeners[key]) for key in self._event_listeners}
 
     def add_event_listener(
-        self, event_type: str, callback: Callable or Awaitable
-    ) -> Callable or Awaitable:
+        self, event_type: str, callback: Callable[..., Any] | Awaitable[Any]
+    ) -> Callable[..., Any]:
         """Listen to events of a specific type."""
         if event_type in self._event_listeners:
             self._event_listeners[event_type].append(callback)
@@ -33,7 +37,7 @@ class EventBus:
 
         return remove_listener
 
-    def fire(self, event_type: str, event) -> None:
+    def fire(self, event_type: str, event: Event) -> None:
         """Fire an event."""
         for listener in self._event_listeners.get(event_type, []):
             try:
@@ -51,7 +55,7 @@ class EventBus:
                 listener(event)
 
     def _remove_event_listener(
-        self, event_type: str, listener: Callable or Awaitable
+        self, event_type: str, listener: Callable[..., Any] | Awaitable[Any]
     ) -> None:
         """Remove a listener for an event type."""
         try:

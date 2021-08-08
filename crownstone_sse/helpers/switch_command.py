@@ -1,5 +1,9 @@
 """Classes that represent a Crownstone switch command."""
+from __future__ import annotations
+
+from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Any
 
 
 class SwitchCommandType(Enum):
@@ -11,33 +15,30 @@ class SwitchCommandType(Enum):
     PERCENTAGE = auto()
 
 
+@dataclass
 class SwitchCommandValue:
     """Container for a switch command value."""
 
-    def __init__(self, cmd_type: SwitchCommandType, percentage: int = None):
-        """Initialize a switch command value."""
-        self.type = cmd_type
-        self.percentage = 0
-        if percentage is not None:
-            self.percentage = percentage
+    type: SwitchCommandType
+    percentage: int = 0
 
 
 class SwitchCommand:
     """Command SSE event that requests to switch a single Crownstone."""
 
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         """Initialize event."""
         self.data = data
 
     @property
     def cloud_id(self) -> str:
         """Return the cloud id."""
-        return self.data["id"]
+        return str(self.data["id"])
 
     @property
     def unique_id(self) -> str:
         """Return the unique id."""
-        return self.data["uid"]
+        return str(self.data["uid"])
 
     @property
     def switch_val(self) -> SwitchCommandValue:
@@ -45,10 +46,10 @@ class SwitchCommand:
         if self.data["type"] == "TURN_ON":
             return SwitchCommandValue(SwitchCommandType.TURN_ON)
 
-        elif self.data["type"] == "TURN_OFF":
+        if self.data["type"] == "TURN_OFF":
             return SwitchCommandValue(SwitchCommandType.TURN_OFF)
 
-        elif self.data["type"] == "PERCENTAGE":
+        if self.data["type"] == "PERCENTAGE":
             percentage = int(self.data["percentage"])
             if percentage < 0:
                 percentage = 0
@@ -56,5 +57,4 @@ class SwitchCommand:
                 percentage = 100
             return SwitchCommandValue(SwitchCommandType.PERCENTAGE, percentage)
 
-        else:
-            return SwitchCommandValue(SwitchCommandType.UNKNOWN)
+        return SwitchCommandValue(SwitchCommandType.UNKNOWN)

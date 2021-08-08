@@ -1,11 +1,12 @@
 """Functions to get or create an aiohttp ClientSession."""
 import ssl
+from typing import Any
 
 import aiohttp
 import certifi
 
 
-def create_client_session(**kwargs) -> aiohttp.ClientSession:
+def create_client_session(**kwargs: Any) -> aiohttp.ClientSession:
     """Create a new aiohttp ClientSession."""
     connector = get_connector()
 

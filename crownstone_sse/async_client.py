@@ -11,7 +11,7 @@ import hashlib
 import json
 import logging
 from enum import Enum, auto
-from typing import Optional
+from typing import Any
 
 import aiohttp
 
@@ -52,12 +52,14 @@ class AsyncClientState(Enum):
 class CrownstoneSSEAsync:
     """Crownstone event client async iterator."""
 
+    _client_response: aiohttp.ClientResponse
+
     def __init__(
         self,
         email: str,
         password: str,
-        access_token: Optional[str] = None,
-        websession: Optional[aiohttp.ClientSession] = None,
+        access_token: str | None = None,
+        websession: aiohttp.ClientSession | None = None,
         reconnection_time: int = RECONNECTION_TIME,
     ) -> None:
         """Initialize event client.
@@ -79,15 +81,14 @@ class CrownstoneSSEAsync:
 
         if websession is None:
             self.websession = create_client_session()
-            self._close_session: bool = True
+            self._close_session = True
         else:
             self.websession = websession
-            self._close_session: bool = False
+            self._close_session = False
 
         self._state = AsyncClientState.CLOSED
-        self._client_response: Optional[aiohttp.ClientResponse] = None
         self._reconnection_time = reconnection_time
-        self._sleep_task: Optional[asyncio.Task] = None
+        self._sleep_task: asyncio.Task[Any] | None = None
 
     @property
     def is_available(self) -> bool:
@@ -102,11 +103,10 @@ class CrownstoneSSEAsync:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, *exc_info: tuple[Any]) -> None:
         """Close the connection to the Crownstone SSE server."""
         if self._client_response is not None:
             self._client_response.close()
-            self._client_response = None
 
         if self._close_session:
             await self.websession.close()
@@ -117,7 +117,7 @@ class CrownstoneSSEAsync:
     async def __anext__(self) -> Event:
         """Return the next event"""
         # safeguard
-        if not self._client_response:
+        if not hasattr(self, "_client_response"):
             raise CrownstoneConnectionException(ConnectError.CONNECTION_NO_RESPONSE)
 
         # aiohttp StreamReader supports asynchronous iteration by line
@@ -133,7 +133,7 @@ class CrownstoneSSEAsync:
                     # only look at the data lines, ignore everything else
                     if line_str.startswith("data:"):
                         line_str = line_str.lstrip("data:")
-                        data: dict = json.loads(line_str)
+                        data: dict[str, Any] = json.loads(line_str)
 
                         event = parse_event(data)
                         # handle important system events
@@ -178,12 +178,12 @@ class CrownstoneSSEAsync:
         hashed_password = sha_hash.hexdigest()
 
         # Create JSON object with login credentials
-        data = {"email": self._email, "password": hashed_password}
+        login_data = {"email": self._email, "password": hashed_password}
 
         try:
             # login
-            response = await self.websession.post(LOGIN_URL, json=data)
-            data = await response.json()
+            response = await self.websession.post(LOGIN_URL, json=login_data)
+            data: dict[str, Any] = await response.json()
             # success
             if response.status == 200:
                 self._access_token = data["id"]
@@ -196,7 +196,7 @@ class CrownstoneSSEAsync:
                         raise CrownstoneAuthException(
                             AuthError.AUTHENTICATION_ERROR, "Wrong email/password"
                         )
-                    elif error["code"] == LOGIN_FAILED_EMAIL_NOT_VERIFIED:
+                    if error["code"] == LOGIN_FAILED_EMAIL_NOT_VERIFIED:
                         raise CrownstoneAuthException(
                             AuthError.EMAIL_NOT_VERIFIED, "Email not verified"
                         )
@@ -206,21 +206,19 @@ class CrownstoneSSEAsync:
                     AuthError.UNKNOWN_ERROR, "Unknown error occurred"
                 )
 
-        except aiohttp.ClientConnectionError:
+        except aiohttp.ClientConnectionError as err:
             raise CrownstoneConnectionException(
                 ConnectError.CONNECTION_FAILED_NO_INTERNET, "No internet connection"
-            )
+            ) from err
 
     async def _async_connect(self) -> None:
         """Open a connection to the HTTP server."""
         # Headers for this request
         # According to SSE specification
-        kwargs = {
-            "headers": {
-                aiohttp.hdrs.CONTENT_TYPE: CONTENT_TYPE,
-                aiohttp.hdrs.ACCEPT: CONTENT_TYPE,
-                aiohttp.hdrs.CACHE_CONTROL: NO_CACHE,
-            }
+        headers = {
+            aiohttp.hdrs.CONTENT_TYPE: CONTENT_TYPE,
+            aiohttp.hdrs.ACCEPT: CONTENT_TYPE,
+            aiohttp.hdrs.CACHE_CONTROL: NO_CACHE,
         }
 
         # Override the default total timeout of 5 minutes for this stream
@@ -231,8 +229,8 @@ class CrownstoneSSEAsync:
         try:
             response = await self.websession.get(
                 url=f"{EVENT_BASE_URL}{self._access_token}",
+                headers=headers,
                 timeout=sse_timeout,
-                **kwargs,
             )
             # Raises ClientResponseError
             response.raise_for_status()
@@ -260,8 +258,8 @@ class CrownstoneSSEAsync:
         self._sleep_task = asyncio.create_task(asyncio.sleep(self._reconnection_time))
         try:
             await self._sleep_task
-        except asyncio.CancelledError:
-            raise StopAsyncIteration
+        except asyncio.CancelledError as err:
+            raise StopAsyncIteration from err
         finally:
             self._sleep_task = None
 
