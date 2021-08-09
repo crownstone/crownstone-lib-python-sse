@@ -93,7 +93,7 @@ class CrownstoneSSEAsync:
     @property
     def is_available(self) -> bool:
         """Returns whether the client is currently running."""
-        return self._state == AsyncClientState.RUNNING
+        return bool(self._state == AsyncClientState.RUNNING)
 
     async def __aenter__(self) -> CrownstoneSSEAsync:
         """Login & establish a new connection to the Crownstone SSE server."""
