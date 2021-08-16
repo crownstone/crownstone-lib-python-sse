@@ -7,7 +7,7 @@ Asynchronous Python library that listens to Crownstone SSE events.
 * Complete: Fully integrated event bus that can be used to listen to events, and run callbacks.
 
 ## Requirements
-* Python 3.9
+* Python 3.8
 * Aiohttp 3.7.4
 
 ## Standard installation

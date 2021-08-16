@@ -13,9 +13,8 @@ setup(
     packages=find_packages(exclude=['examples', 'tests']),
     install_requires=list(package.strip() for package in open('requirements.txt')),
     classifiers=[
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9'
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.8',
 )
