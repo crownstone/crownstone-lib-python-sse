@@ -35,4 +35,4 @@ from crownstone_sse.const import (
 )
 from crownstone_sse.util.eventbus import EventBus
 
-__version__ = "2.0.1-git"
+__version__ = "2.0.2"
