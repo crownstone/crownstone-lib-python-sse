@@ -134,5 +134,5 @@ dmypy.json
 # VS code
 .vscode/
 
-release.sh
+release_sse.sh
 
