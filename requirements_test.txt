@@ -1,0 +1,2 @@
+asynctest~=0.13.0
+coverage~=6.1
