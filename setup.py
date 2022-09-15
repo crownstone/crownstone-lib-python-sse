@@ -14,7 +14,8 @@ setup(
     install_requires=list(package.strip() for package in open('requirements.txt')),
     classifiers=[
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9'
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10'
     ],
     python_requires='>=3.8',
 )

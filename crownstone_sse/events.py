@@ -143,7 +143,7 @@ class MultiSwitchCommandEvent:
 
     @property
     def crownstone_list(self) -> list[SwitchCommand]:
-        """ Return a list of SwitchCommand."""
+        """Return a list of SwitchCommand."""
         switch_list: list[SwitchCommand] = []
         for cmd in self.data["switchData"]:
             switch_list.append(SwitchCommand(cmd))

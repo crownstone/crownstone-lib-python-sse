@@ -26,6 +26,7 @@ class CrownstoneSSE(threading.Thread):
         password: str,
         access_token: str | None = None,
         reconnection_time: int = RECONNECTION_TIME,
+        project_name: str | None = None,
     ) -> None:
         """
         Initialize event client.
@@ -42,6 +43,7 @@ class CrownstoneSSE(threading.Thread):
         self._password = password
         self._access_token = access_token
         self._reconnection_time = reconnection_time
+        self._project_name = project_name
         self._bus = EventBus()
 
         super().__init__(target=self._start_client)
@@ -58,6 +60,7 @@ class CrownstoneSSE(threading.Thread):
             password=self._password,
             access_token=self._access_token,
             reconnection_time=self._reconnection_time,
+            project_name=self._project_name,
         )
 
         async with self._client as sse_client:

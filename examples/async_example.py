@@ -2,7 +2,7 @@
 Async example of receiving Crownstone SSE events.
 
 Created by Ricardo Steijn.
-Last update on 03-11-2021.
+Last update on 15-09-2022.
 """
 import asyncio
 import logging
@@ -20,9 +20,11 @@ async def main():
     # access_token (string) [optional]: Access token from a previous login to skip the login step.
     # websession (aiohttp.ClientSession): provide the websession used in a project this is integrated in.
     # reconnection_time (int): time to wait before reconnection on connection loss.
+    # project_name (string) [optional]: name of the project this is integrated in. This provides context to SSE logs in case of an error.
     client = CrownstoneSSEAsync(
         email="example@example.com",
-        password="CrownstoneRocks"
+        password="CrownstoneRocks",
+        project_name="MyProject"
     )
     # wait for the client to finish (means: blocking, run forever).
     await process_events(client)

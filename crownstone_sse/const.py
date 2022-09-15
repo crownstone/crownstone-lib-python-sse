@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from typing import Final
 
+# Project name
+PROJECT_NAME: Final = "crownstone-lib-python-sse"
+NO_PROJECT_NAME: Final = "no_project_name"
+
 # URLs
 EVENT_BASE_URL: Final = "https://events.crownstone.rocks/sse?accessToken="
 LOGIN_URL: Final = "https://cloud.crownstone.rocks/api/users/login"
@@ -12,7 +16,7 @@ CONTENT_TYPE: Final = "text/event-stream"
 NO_CACHE: Final = "no-cache"
 
 # Connection parameters
-RECONNECTION_TIME: Final = 30
+RECONNECTION_TIME: Final = 2
 CONNECTION_TIMEOUT: Final = 35
 
 # SSE Ping event
@@ -21,6 +25,7 @@ EVENT_PING: Final = "ping"
 # SSE System events
 EVENT_SYSTEM: Final = "system"
 EVENT_SYSTEM_TOKEN_EXPIRED: Final = "TOKEN_EXPIRED"
+EVENT_SYSTEM_TOKEN_INVALID: Final = "INVALID_ACCESS_TOKEN"
 EVENT_SYSTEM_NO_ACCESS_TOKEN: Final = "NO_ACCESS_TOKEN"
 EVENT_SYSTEM_NO_CONNECTION: Final = "NO_CONNECTION"
 EVENT_SYSTEM_STREAM_START: Final = "STREAM_START"
@@ -58,7 +63,7 @@ EVENT_PRESENCE_EXIT_LOCATION: Final = "exitLocation"
 EVENT_ABILITY_CHANGE: Final = "abilityChange"
 EVENT_ABILITY_CHANGE_DIMMING: Final = "dimming"
 EVENT_ABILITY_CHANGE_SWITCHCRAFT: Final = "switchcraft"
-EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE : Final= "tapToToggle"
+EVENT_ABILITY_CHANGE_TAP_TO_TOGGLE: Final = "tapToToggle"
 
 # errors
 LOGIN_FAILED: Final = "LOGIN_FAILED"
@@ -67,6 +72,7 @@ LOGIN_FAILED_EMAIL_NOT_VERIFIED: Final = "LOGIN_FAILED_EMAIL_NOT_VERIFIED"
 # lists for iteration
 system_events: Final[list[str]] = [
     EVENT_SYSTEM_TOKEN_EXPIRED,
+    EVENT_SYSTEM_TOKEN_INVALID,
     EVENT_SYSTEM_NO_ACCESS_TOKEN,
     EVENT_SYSTEM_NO_CONNECTION,
     EVENT_SYSTEM_STREAM_START,

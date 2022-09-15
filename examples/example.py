@@ -2,7 +2,7 @@
 Sync example of receiving Crownstone SSE events.
 
 Created by Ricardo Steijn.
-Last update on 06-05-2021.
+Last update on 15-09-2022.
 """
 import logging
 from crownstone_sse import CrownstoneSSE
@@ -62,9 +62,11 @@ def notify_data_changed(event: DataChangeEvent):
 # password (string): your Crownstone account password.
 # access_token (string) [optional]: Access token from a previous login to skip the login step.
 # reconnection_time (int): time to wait before reconnection on connection loss.
+# project_name (string) [optional]: name of the project this is integrated in. This provides context to SSE logs in case of an error.
 sse_client = CrownstoneSSE(
     email="example@example.com",
-    password="CrownstoneRocks"
+    password="CrownstoneRocks",
+    project_name="MyProject"
 )
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.

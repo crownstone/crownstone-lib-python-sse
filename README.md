@@ -7,8 +7,8 @@ Asynchronous Python library that listens to Crownstone SSE events.
 * Complete: Fully integrated event bus that can be used to listen to events, and run callbacks.
 
 ## Requirements
-* Python 3.8
-* Aiohttp 3.7.4
+* Python 3.8 or higher
+* Aiohttp 3.7
 
 ## Standard installation
 cd to the project folder and run:
@@ -52,9 +52,11 @@ async def main():
     # access_token (string) [optional]: Access token from a previous login to skip the login step.
     # websession (aiohttp.ClientSession): provide the websession used in a project this is integrated in.
     # reconnection_time (int): time to wait before reconnection on connection loss.
+    # project_name (string) [optional]: name of the project this is integrated in. This provides context to SSE logs in case of an error.
     client = CrownstoneSSEAsync(
         email="example@example.com",
-        password="CrownstoneRocks"
+        password="CrownstoneRocks",
+        project_name="MyProject"
     )
     # wait for the client to finish (means: blocking, run forever).
     await process_events(client)
@@ -171,9 +173,11 @@ def notify_data_changed(event: DataChangeEvent):
 # password (string): your Crownstone account password.
 # access_token (string) [optional]: Access token from a previous login to skip the login step.
 # reconnection_time (int): time to wait before reconnection on connection loss.
+# project_name (string) [optional]: name of the project this is integrated in. This provides context to SSE logs in case of an error.
 sse_client = CrownstoneSSE(
     email="example@example.com",
-    password="CrownstoneRocks"
+    password="CrownstoneRocks",
+    project_name="MyProject"
 )
 
 # Add listeners for event types of your liking, and the desired callback to be executed. see above.

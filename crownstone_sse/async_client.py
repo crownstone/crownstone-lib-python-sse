@@ -15,16 +15,20 @@ from typing import Any
 
 import aiohttp
 
+import crownstone_sse
 from crownstone_sse.const import (
     CONNECTION_TIMEOUT,
     CONTENT_TYPE,
     EVENT_BASE_URL,
     EVENT_SYSTEM_NO_CONNECTION,
     EVENT_SYSTEM_TOKEN_EXPIRED,
+    EVENT_SYSTEM_TOKEN_INVALID,
     LOGIN_FAILED,
     LOGIN_FAILED_EMAIL_NOT_VERIFIED,
     LOGIN_URL,
     NO_CACHE,
+    NO_PROJECT_NAME,
+    PROJECT_NAME,
     RECONNECTION_TIME,
 )
 from crownstone_sse.events import Event, SystemEvent, parse_event
@@ -61,6 +65,7 @@ class CrownstoneSSEAsync:
         access_token: str | None = None,
         websession: aiohttp.ClientSession | None = None,
         reconnection_time: int = RECONNECTION_TIME,
+        project_name: str | None = None,
     ) -> None:
         """Initialize event client.
 
@@ -74,6 +79,8 @@ class CrownstoneSSEAsync:
             Creates a default session when none provided.
         :param reconnection_time: Time between reconnection in case of connection failure.
         """
+        self._project_name = f"{PROJECT_NAME}-{crownstone_sse.__version__}-{project_name or NO_PROJECT_NAME}"
+
         self._email = email
         self._password = password
         self._access_token = access_token
@@ -105,7 +112,10 @@ class CrownstoneSSEAsync:
 
     async def __aexit__(self, *exc_info: tuple[Any]) -> None:
         """Close the connection to the Crownstone SSE server."""
-        if self._client_response is not None:
+        if (
+            hasattr(self, "_client_response")
+            and getattr(self, "_client_response") is not None
+        ):
             self._client_response.close()
 
         if self._close_session:
@@ -140,15 +150,19 @@ class CrownstoneSSEAsync:
                         if isinstance(event, SystemEvent):
                             if event.sub_type == EVENT_SYSTEM_TOKEN_EXPIRED:
                                 raise CrownstoneAuthException(AuthError.TOKEN_EXPIRED)
+                            if event.sub_type == EVENT_SYSTEM_TOKEN_INVALID:
+                                raise CrownstoneAuthException(AuthError.TOKEN_INVALID)
                             if event.sub_type == EVENT_SYSTEM_NO_CONNECTION:
-                                _LOGGER.warning(event.message)
+                                raise CrownstoneConnectionException(
+                                    ConnectError.CONNECTION_TO_CLOUD_LOST
+                                )
 
                         return event
 
             except aiohttp.ClientPayloadError:
                 # a payload error due to packet loss
                 # reconnection should retrieve server side cached events
-                await self._async_connect()
+                await self._async_reconnect()
 
             except aiohttp.ServerTimeoutError:
                 # Read timeout. A ping event is send every 30 seconds
@@ -157,9 +171,17 @@ class CrownstoneSSEAsync:
 
             except CrownstoneAuthException as auth_err:
                 # handle re-auth and reconnection
-                if auth_err.type == AuthError.TOKEN_EXPIRED:
+                if (
+                    auth_err.type == AuthError.TOKEN_EXPIRED
+                    or auth_err.type == AuthError.TOKEN_INVALID
+                ):
                     await self._async_login()
-                    await self._async_connect()
+                    await self._async_reconnect()
+
+            except CrownstoneConnectionException as conn_err:
+                # sse server lost connection to the cloud service
+                if conn_err.type == ConnectError.CONNECTION_TO_CLOUD_LOST:
+                    await self._async_reconnect()
 
             except CrownstoneClientException as client_err:
                 # client is manually closed
@@ -223,12 +245,19 @@ class CrownstoneSSEAsync:
 
         # Override the default total timeout of 5 minutes for this stream
         # Stream should be alive forever unless explicitly stopped
-        # a ping event is send every 30 second, if nothing is read, reconnect
+        # a ping event is send every 30 seconds, if nothing is read, reconnect
         sse_timeout = aiohttp.ClientTimeout(total=None, sock_read=CONNECTION_TIMEOUT)
+
+        # Close old session if reconnecting
+        if (
+            hasattr(self, "_client_response")
+            and getattr(self, "_client_response") is not None
+        ):
+            self._client_response.close()
 
         try:
             response = await self.websession.get(
-                url=f"{EVENT_BASE_URL}{self._access_token}",
+                url=f"{EVENT_BASE_URL}{self._access_token}&projectName={self._project_name}",
                 headers=headers,
                 timeout=sse_timeout,
             )
@@ -250,8 +279,8 @@ class CrownstoneSSEAsync:
         # log once
         if self._state != AsyncClientState.CONNECTING:
             _LOGGER.warning(
-                "Lost connection to the Crownstone SSE server. "
-                "Reconnecting in 30 seconds."
+                f"Lost connection to the Crownstone SSE server. "
+                f"Reconnecting in {RECONNECTION_TIME} seconds."
             )
 
         self._state = AsyncClientState.CONNECTING
